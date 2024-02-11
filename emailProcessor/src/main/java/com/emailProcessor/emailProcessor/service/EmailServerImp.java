@@ -5,7 +5,6 @@ import com.emailProcessor.emailProcessor.entity.Email;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,7 @@ public class EmailServerImp implements EmailService{
     }
 
     @Override
-    public EmailDto getEmailById(ObjectId id) {
+    public EmailDto getEmailById(String id) {
         Email user = emailRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return modelMapper.map(user, EmailDto.class);
@@ -48,7 +47,7 @@ public class EmailServerImp implements EmailService{
     }
 
     @Override
-    public EmailDto updateEmail(ObjectId id, EmailDto emailDto) {
+    public EmailDto updateEmail(String id, EmailDto emailDto) {
         Email existingEmail = emailRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
@@ -62,7 +61,7 @@ public class EmailServerImp implements EmailService{
     }
 
     @Override
-    public void deleteEmail(ObjectId id) {
+    public void deleteEmail(String id) {
         if (!emailRepository.existsById(id)) {
             throw new ResourceNotFoundException("User not found with id: " + id);
         }

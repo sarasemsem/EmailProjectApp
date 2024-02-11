@@ -18,7 +18,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Email {
 
     @Id
-    private ObjectId emailId;
+    private String emailId;
 
     //private Integer emailId;
     private String sender;

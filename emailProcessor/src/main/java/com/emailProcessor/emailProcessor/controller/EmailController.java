@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("api/email")
+@CrossOrigin(origins = "http://localhost:4200/")
+@RequestMapping("api/v1/email")
 public class EmailController {
 
     @Autowired
@@ -18,6 +20,10 @@ public class EmailController {
     @RequestMapping("retrievedEmails")
     public List<EmailDto> getEmails() {
         return emailService.getAllEmails();
+    }
+    @GetMapping("/{emailId}")
+    public EmailDto getEmailDetails(@PathVariable Map<String,String> payload) {
+        return emailService.getEmailById(payload.get("emailId"));
     }
     @PostMapping
     public ResponseEntity<String> saveEmail(@RequestBody EmailDto emailDto) {

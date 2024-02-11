@@ -9,12 +9,13 @@ import org.springframework.stereotype.Service;
 public interface EmailService {
         List<EmailDto> getAllEmails();
 
-    EmailDto getEmailById(ObjectId id);
+    EmailDto getEmailById(String id);
 
     ResponseEntity<String> createEmail(EmailDto emailDto);
 
-    EmailDto updateEmail(ObjectId id, EmailDto emailDto);
 
-        void deleteEmail(ObjectId id);
 
+    EmailDto updateEmail(String id, EmailDto emailDto);
+
+    void deleteEmail(String id);
 }

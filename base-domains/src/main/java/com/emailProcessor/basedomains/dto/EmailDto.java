@@ -14,7 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor
 public class EmailDto {
 
-    private ObjectId emailId;
+    private String emailId;
     private String sender;
     private String subject;
     private String content;
