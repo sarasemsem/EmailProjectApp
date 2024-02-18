@@ -18,7 +18,9 @@ public class EmailDto {
     private String sender;
     private String subject;
     private String content;
+    private Boolean isRead = false;
     private Instant date;
     private Integer categoryId;
-    private Boolean treated;
+    private Boolean treated = false;
+
 }

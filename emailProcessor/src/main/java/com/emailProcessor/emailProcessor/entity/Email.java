@@ -19,15 +19,11 @@ public class Email {
 
     @Id
     private String emailId;
-
-    //private Integer emailId;
     private String sender;
     private String subject;
-
-    // @Column(columnDefinition = "LONGTEXT")
     private String content;
-
+    private Boolean isRead = false;
     private Instant date;
     private Integer categoryId;
-    private Boolean treated;
+    private Boolean treated = false;
 }

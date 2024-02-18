@@ -31,12 +31,12 @@ public class EmailController {
     }
 
     @PutMapping("/{id}")
-    public EmailDto updateUser(@PathVariable ObjectId id, @RequestBody EmailDto emailDto) {
+    public EmailDto updateEmail(@PathVariable String id, @RequestBody EmailDto emailDto) {
         return emailService.updateEmail(id, emailDto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable ObjectId id) {
+    public ResponseEntity<Void> deleteEmail(@PathVariable String id) {
         emailService.deleteEmail(id);
         return ResponseEntity.noContent().build();
     }
