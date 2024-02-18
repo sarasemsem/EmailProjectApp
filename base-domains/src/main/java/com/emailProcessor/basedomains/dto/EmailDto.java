@@ -17,6 +17,7 @@ public class EmailDto {
     private String emailId;
     private String sender;
     private String subject;
+    private String originalContent;
     private String content;
     private Boolean isRead = false;
     private Instant date;

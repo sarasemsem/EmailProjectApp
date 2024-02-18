@@ -53,6 +53,7 @@ public class EmailServerImp implements EmailService{
 
         // Update fields
         existingEmail.setSubject(emailDto.getSubject());
+        existingEmail.setOriginalContent(emailDto.getOriginalContent());
         existingEmail.setContent(emailDto.getContent());
         existingEmail.setSender(emailDto.getSender());
 

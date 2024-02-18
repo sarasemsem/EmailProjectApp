@@ -147,6 +147,7 @@ public class EmailMonitoringService extends MessageCountAdapter implements Appli
         } else {
             // Handle the case where the received date is not available
         }
+        emailDto.setOriginalContent(message.getContent().toString());
         Object content = message.getContent();
         if (content instanceof Multipart) {
             Multipart multipart = (Multipart) content;
