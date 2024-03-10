@@ -23,5 +23,5 @@ public class EmailDto {
     private Instant date;
     private Integer categoryId;
     private Boolean treated = false;
-
+    private SenderDto contact;
 }

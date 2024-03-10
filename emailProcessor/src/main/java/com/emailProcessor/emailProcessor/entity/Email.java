@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 //@Entity
@@ -27,4 +28,6 @@ public class Email {
     private Instant date;
     private Integer categoryId;
     private Boolean treated = false;
+    @DBRef
+    private Sender contact;
 }

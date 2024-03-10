@@ -1,11 +1,13 @@
-package com.emailProcessor.emailProcessor.service;
+package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.EmailDto;
 import com.emailProcessor.emailProcessor.entity.Email;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
+import com.emailProcessor.emailProcessor.service.EmailService;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -15,15 +17,15 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-public class EmailServerImp implements EmailService{
+public class EmailServiceImp implements EmailService {
     @Autowired
     private EmailRepository emailRepository;
     private final ModelMapper modelMapper;
 
     @Override
     public List<EmailDto> getAllEmails() {
-        List<Email> users = emailRepository.findAll();
-        return users.stream()
+        List<Email> emails = emailRepository.findAll(Sort.by(Sort.Direction.DESC, "timestamp"));
+        return emails.stream()
                 .map(user -> modelMapper.map(user, EmailDto.class))
                 .collect(Collectors.toList());
     }
@@ -31,7 +33,7 @@ public class EmailServerImp implements EmailService{
     @Override
     public EmailDto getEmailById(String id) {
         Email user = emailRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Email not found with id: " + id));
         return modelMapper.map(user, EmailDto.class);
     }
 
@@ -49,14 +51,14 @@ public class EmailServerImp implements EmailService{
     @Override
     public EmailDto updateEmail(String id, EmailDto emailDto) {
         Email existingEmail = emailRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("email not found with id: " + id));
 
         // Update fields
         existingEmail.setSubject(emailDto.getSubject());
         existingEmail.setOriginalContent(emailDto.getOriginalContent());
         existingEmail.setContent(emailDto.getContent());
         existingEmail.setSender(emailDto.getSender());
-
+        existingEmail.setIsRead(emailDto.getIsRead());
         Email updatedUser = emailRepository.save(existingEmail);
         return modelMapper.map(updatedUser, EmailDto.class);
     }
@@ -64,7 +66,7 @@ public class EmailServerImp implements EmailService{
     @Override
     public void deleteEmail(String id) {
         if (!emailRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found with id: " + id);
+            throw new ResourceNotFoundException("Email not found with id: " + id);
         }
         emailRepository.deleteById(id);
     }
