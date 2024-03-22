@@ -5,6 +5,8 @@ import com.emailProcessor.emailProcessor.entity.Category;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.service.CategoryService;
 import com.mongodb.lang.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,12 +17,14 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing {@link com.emailProcessor.basedomains.dto.CategoryDto}.
  */
 @RestController
 @RequestMapping("api/v1/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
     private final Logger log = LoggerFactory.getLogger(CategoryController.class);
@@ -28,15 +32,9 @@ public class CategoryController {
     private static final String ENTITY_NAME = "category";
 
 
-
+    private final ModelMapper modelMapper;
     private final CategoryService categoryService;
-
     private final CategoryRepository categoryRepository;
-
-    public CategoryController(CategoryService categoryService, CategoryRepository categoryRepository) {
-        this.categoryService = categoryService;
-        this.categoryRepository = categoryRepository;
-    }
 
     /**
      * {@code POST  /categories} : Create a new category.
@@ -137,9 +135,15 @@ public class CategoryController {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of categories in body.
      */
     @GetMapping("")
-    public List<Category> getAllCategories() {
+    public List<CategoryDto> getAllCategories() {
         log.debug("REST request to get all Categories");
-        return categoryService.findAllCategories();
+        List<Category> categories = categoryService.findAllCategories();
+        System.out.println(categories.toString());
+        return categories.stream()
+                .map(keyword -> modelMapper.map(keyword, CategoryDto.class))
+                .collect(Collectors.toList());
+
+
     }
 
     /**

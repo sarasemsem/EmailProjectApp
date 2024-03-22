@@ -13,10 +13,10 @@ public interface KeywordService {
     /**
      * Save a keyword.
      *
-     * @param keywordDto the entity to save.
+     * @param keyword the entity to save.
      * @return the persisted entity.
      */
-    Keyword save(KeywordDto keywordDto);
+    Keyword save(Keyword keyword);
 
     /**
      * Updates a keyword.
@@ -39,7 +39,7 @@ public interface KeywordService {
      *
      * @return the list of entities.
      */
-    List<Keyword> findAll();
+    List<Keyword> findAllKeywords();
 
     /**
      * Get the "id" keyword.
@@ -49,6 +49,8 @@ public interface KeywordService {
      */
     Optional<Keyword> findOne(String id);
 
+    Optional<KeywordDto> findKeywordByWord(String word);
+
     /**
      * Delete the "id" keyword.
      *
@@ -56,4 +58,5 @@ public interface KeywordService {
      * @return
      */
     ResponseEntity<Void> delete(String id);
+
 }

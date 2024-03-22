@@ -35,6 +35,10 @@ public class Worker implements Serializable {
     @DBRef
     private Set<SecurityRole> roles = new HashSet<>();
 
+    public Worker(String id) {
+        this.workerId = id;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

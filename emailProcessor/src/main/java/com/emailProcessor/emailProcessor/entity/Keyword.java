@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -22,15 +23,17 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(collection = "keyword")
-public class Keyword {
+public class Keyword implements Serializable{
 
-    @NotNull
     @MongoId
     private String keywordId;
     @NotNull
     private String word;
     @DBRef
     private Worker createdBy;
+    @JsonIgnoreProperties("keywords")
+    private Set<Category> categories = new HashSet<>();
+
     @JsonIgnoreProperties(value = { "keyword" }, allowSetters = true)
     private Set<TranslatedKeyword> translatedKeywords = new HashSet<>();
 

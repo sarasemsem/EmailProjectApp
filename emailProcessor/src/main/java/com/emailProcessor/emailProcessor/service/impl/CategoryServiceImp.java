@@ -62,18 +62,17 @@ public class CategoryServiceImp implements CategoryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Category> findAllCategories() {
         log.debug("Request to get all Categories");
         return categoryRepository.findAll();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<CategoryDto> findOneCategory(String id) {
         log.debug("Request to get Category : {}", id);
-        Optional<Category> category= categoryRepository.findById(id);
-        return Optional.of(modelMapper.map(category, CategoryDto.class));
+        System.out.println("the Id of category is"+ id);
+        Optional<Category> category = categoryRepository.findById(id);
+        return category.map(c -> modelMapper.map(c, CategoryDto.class));
     }
 
     @Override

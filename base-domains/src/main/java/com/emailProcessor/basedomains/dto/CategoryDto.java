@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.List;
+
 /**
  * A Category.
  */
@@ -18,13 +20,15 @@ public class CategoryDto implements Serializable {
     private String categoryId;
     private String title;
     private String description;
-    private LinkedActionDto linkedActionDto;
+    private List<String> keywords ;
 
     @Override
     public int hashCode() {
         return getClass().hashCode();
     }
-
+    public void Category(String id) {
+        this.categoryId = id;
+    }
     // prettier-ignore
     @Override
     public String toString() {

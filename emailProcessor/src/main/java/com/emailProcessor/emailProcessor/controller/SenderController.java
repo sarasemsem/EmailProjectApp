@@ -1,5 +1,6 @@
 package com.emailProcessor.emailProcessor.controller;
 
+import com.emailProcessor.basedomains.dto.CustomResponse;
 import com.emailProcessor.basedomains.dto.SenderDto;
 import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
 import com.emailProcessor.emailProcessor.entity.Sender;
@@ -44,18 +45,13 @@ public class SenderController {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("")
-    public ResponseEntity<String> createSender(@Validated @RequestBody SenderDto senderDto) {
+    public ResponseEntity<CustomResponse> createSender(@Validated @RequestBody SenderDto senderDto) {
         log.debug("REST request to save Sender : {}", senderDto);
-        try {
-            ResponseEntity<String> result = senderService.saveSender(senderDto);
-            return result;
-        } catch (BadRequestException e) {
-            log.error("Bad request alert exception", e);
-            return ResponseEntity.badRequest().body("Bad request: " + e.getMessage());
-        } catch (Exception e) {
-            log.error("Error saving sender", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving sender");
-        }
+
+            Sender result = senderService.saveSender(senderDto);
+            CustomResponse customResponse = new CustomResponse(result, HttpStatus.CREATED.value(), "sender saved successfully");
+            return ResponseEntity.status(HttpStatus.CREATED).body(customResponse);
+
     }
 
     /**

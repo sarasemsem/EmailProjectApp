@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.bson.types.ObjectId;
-
 import java.time.Instant;
 
 @Getter
@@ -21,7 +19,7 @@ public class EmailDto {
     private String content;
     private Boolean isRead = false;
     private Instant date;
-    private Integer categoryId;
+    private EmailProcessingResultDto result;
     private Boolean treated = false;
     private SenderDto contact;
 }

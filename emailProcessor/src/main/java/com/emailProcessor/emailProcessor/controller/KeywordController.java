@@ -8,16 +8,19 @@ import com.emailProcessor.emailProcessor.service.KeywordService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing {@link com.emailProcessor.emailProcessor.entity.Keyword}.
@@ -32,17 +35,26 @@ public class KeywordController {
     private static final String ENTITY_NAME = "keyword";
     private final KeywordService keywordService;
     private final KeywordRepository keywordRepository;
+    private final ModelMapper modelMapper;
 
 
     @PostMapping("")
-    public ResponseEntity<CustomResponse> createKeyword(@Valid @RequestBody KeywordDto keywordDto) throws URISyntaxException {
-        log.debug("REST request to save Keyword : {}", keywordDto);
-        System.out.println("REST request to save Keyword : {}"+ keywordDto);
-        Keyword result = keywordService.save(keywordDto);
+    public ResponseEntity<CustomResponse> createKeyword(@Validated @RequestBody Keyword keyword) throws URISyntaxException {
 
-        // Create a custom response object with both data and HTTP status
-        CustomResponse customResponse = new CustomResponse(result, HttpStatus.CREATED.value(), "Keyword saved successfully");
-        return ResponseEntity.status(HttpStatus.CREATED).body(customResponse);
+        log.debug("REST request to save Keyword : {}", keyword);
+        System.out.println("REST request to save Keyword : {}"+ keyword);
+        try {
+            Keyword result = keywordService.save(keyword);
+            // Create a custom response object with both data and HTTP status
+            CustomResponse customResponse = new CustomResponse(result, HttpStatus.CREATED.value(), "Keyword saved successfully");
+            return ResponseEntity.status(HttpStatus.CREATED).body(customResponse);
+        }catch (Exception e) {
+            log.error("Error saving user", e);
+            CustomResponse customResponse = new CustomResponse(keyword, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving keyword");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
+        }
+
+
     }
 
     @PutMapping("/{keywordId}")
@@ -92,9 +104,12 @@ public class KeywordController {
     }
 
     @GetMapping("")
-    public List<Keyword> getAllKeywords(@RequestParam(name = "eagerload", required = false, defaultValue = "true") boolean eagerload) {
+    public List<KeywordDto> getAllKeywords() {
         log.debug("REST request to get all Keywords");
-        return keywordService.findAll();
+        List<Keyword> keywords = keywordService.findAllKeywords();
+        return keywords.stream()
+                .map(keyword -> modelMapper.map(keyword, KeywordDto.class))
+                .collect(Collectors.toList());
     }
 
     /**

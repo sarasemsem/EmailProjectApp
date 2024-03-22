@@ -26,14 +26,10 @@ public class SenderServiceImp implements SenderService {
     private final ModelMapper modelMapper;
     @Override
     @Transactional
-    public ResponseEntity<String> saveSender(SenderDto senderDto) {
+    public Sender saveSender(SenderDto senderDto) {
         log.debug("Request to save Sender : {}", senderDto);
         Sender savedSender = senderRepository.save(modelMapper.map(senderDto, Sender.class));
-        if (savedSender.getSenderId() != null) {
-            return ResponseEntity.status(HttpStatus.CREATED).body("Sender saved successfully");
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to insert the Sender");
-        }
+      return savedSender;
     }
     @Override
     public SenderDto updateSender(SenderDto senderDto) {

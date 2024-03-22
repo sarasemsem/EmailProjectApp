@@ -11,12 +11,8 @@ public interface ActionService {
     ResponseEntity<String>  saveAction(Action action);
     ActionDto updateAction(Action action);
     Optional<Action> partialUpdateAction(Action action);
-
-
     List<Action> findAllActions();
-
     List<Action> findAllActionsWhereLinkedCategoryIsNull();
-
     Optional<ActionDto> findOneAction(String id);
     void deleteAction(String id);
 }

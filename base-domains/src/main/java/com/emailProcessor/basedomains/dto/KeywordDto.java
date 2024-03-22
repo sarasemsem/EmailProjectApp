@@ -14,17 +14,12 @@ import java.util.Set;
 @NoArgsConstructor
 public class KeywordDto {
 
-    @NonNull
     private String keywordId;
     @NonNull
     private String word;
     private WorkerDto createdBy;
-    @NonNull
-    private String categoryId;
+    private Set<CategoryDto> categories = new HashSet<>();
     private Set<TranslatedKeywordDto> translatedKeywords = new HashSet<>();
-
-
-
 
     @Override
     public boolean equals(Object o) {

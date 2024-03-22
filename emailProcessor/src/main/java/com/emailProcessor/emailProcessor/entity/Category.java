@@ -1,16 +1,13 @@
 package com.emailProcessor.emailProcessor.entity;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * A Category.
@@ -26,11 +23,14 @@ public class Category implements Serializable {
     private String categoryId;
     private String title;
     private String description;
-    @DBRef
-    private LinkedCategory linkedCategory;
+    private List<String> keywords ;
 
-    @DBRef
-    private Set<Keyword> keywords = new HashSet<>();
+    //@DBRef
+    //private ActionDto linkedActionDto;
+
+    public Category(String id) {
+        this.categoryId = id;
+    }
 
     @Override
     public int hashCode() {

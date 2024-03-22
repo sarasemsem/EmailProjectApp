@@ -1,9 +1,11 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
+import com.emailProcessor.basedomains.dto.CategoryDto;
 import com.emailProcessor.basedomains.dto.EmailDto;
 import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.entity.Category;
 import com.emailProcessor.emailProcessor.entity.Keyword;
+import com.emailProcessor.emailProcessor.entity.Sender;
 import com.emailProcessor.emailProcessor.repository.KeywordRepository;
 import com.emailProcessor.emailProcessor.service.KeywordService;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service Implementation for managing {@link com.emailProcessor.emailProcessor.entity.Keyword}.
@@ -36,15 +39,25 @@ public class KeywordServiceImpl implements KeywordService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Keyword save(KeywordDto keywordDto) {
-        log.debug("Request to save Keyword : {}", keywordDto);
-        Keyword savedKeyword = keywordRepository.insert(modelMapper.map(keywordDto, Keyword.class));
-        mongoTemplate.update(Category.class)
-                .matching(Criteria.where("categoryId").is(keywordDto.getCategoryId()))
-                .apply(new Update().push("keywords").value(savedKeyword.getKeywordId())) // Corrected field name to "reviewsIds"
-                .first();
+    public Keyword save(Keyword keyword) {
+        log.debug("Request to save Keyword : {}", keyword);
+        System.out.println("Request to save Keyword :"+keyword.toString());
+        // Assuming getCategoryId() returns a String
+        Set<Category> categories = keyword.getCategories();
+
+        // Save the Keyword entity
+        Keyword savedKeyword = keywordRepository.save(keyword);
+
+        // Update each Category document to include the newly created keyword
+        for (Category category : categories) {
+            mongoTemplate.update(Category.class)
+                    .matching(Criteria.where("categoryId").is(category.getCategoryId()))
+                    .apply(new Update().push("keywords").value(savedKeyword.getKeywordId()))
+                    .first();
+        }
         return savedKeyword;
     }
+
 
     @Override
     public Keyword update(Keyword keyword) {
@@ -72,17 +85,25 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Keyword> findAll() {
+    public List<Keyword> findAllKeywords() {
         log.debug("Request to get all Keywords");
         return keywordRepository.findAll();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Keyword> findOne(String id) {
         log.debug("Request to get Keyword : {}", id);
         return keywordRepository.findById(id);
+    }
+
+    @Override
+    public Optional<KeywordDto> findKeywordByWord(String word) {
+        Keyword keyword = keywordRepository.findKeywordByWord(word);
+        if (keyword != null) {
+            return Optional.of(modelMapper.map(keyword, KeywordDto.class));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

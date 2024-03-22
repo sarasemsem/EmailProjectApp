@@ -17,7 +17,7 @@ public interface SenderService {
      * @param senderDto the entity to save.
      * @return the persisted entity.
      */
-    ResponseEntity<String> saveSender(SenderDto senderDto);
+    Sender saveSender(SenderDto senderDto);
 
     /**
      * Updates a sender.
