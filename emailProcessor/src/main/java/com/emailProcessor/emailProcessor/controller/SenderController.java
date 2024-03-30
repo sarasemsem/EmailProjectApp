@@ -9,6 +9,9 @@ import com.emailProcessor.emailProcessor.service.SenderService;
 import com.mongodb.lang.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -26,10 +29,8 @@ import java.util.Optional;
 public class SenderController {
 
     private final Logger log = LoggerFactory.getLogger(SenderController.class);
-
     private static final String ENTITY_NAME = "sender";
     private final SenderService senderService;
-
     private final SenderRepository senderRepository;
 
     public SenderController(SenderService senderService, SenderRepository senderRepository) {
@@ -98,6 +99,7 @@ public class SenderController {
      * or with status {@code 500 (Internal Server Error)} if the sender couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
+
     @PatchMapping(value = "/{senderId}", consumes = { "application/json", "application/merge-patch+json" })
     public ResponseEntity<Optional<Sender>> partialUpdateSender(
         @PathVariable(value = "senderId", required = false) final String senderId,
@@ -162,9 +164,18 @@ public class SenderController {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSender(@PathVariable("id") String id) {
+    public ResponseEntity<String> deleteSender(@PathVariable("id") String id) {
         log.debug("REST request to delete Sender : {}", id);
+        clearCache();
         System.out.println("REST request to delete Sender : ");
-        return senderService.deleteSender(id);
+         senderService.deleteSender(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+
+    }
+
+    @GetMapping("/clear_cache")
+    @CacheEvict(value = "sender", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

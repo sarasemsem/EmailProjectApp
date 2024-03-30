@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 public interface EmailService {
     List<EmailDto> getAllEmails();
     EmailDto getEmailById(String id);
-    ResponseEntity<String> createEmail(EmailDto emailDto);
+    Email createEmail(EmailDto emailDto);
     Optional<Email> partialUpdate(EmailDto email);
     List<EmailDto> getAllUntreatedEmails();
     EmailDto updateEmail(String id, EmailDto emailDto);
-    void deleteEmail(String id);
+    void deleteEmails(String[] ids);
 }

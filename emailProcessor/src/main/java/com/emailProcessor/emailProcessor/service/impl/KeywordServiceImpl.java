@@ -1,11 +1,7 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
-import com.emailProcessor.basedomains.dto.CategoryDto;
-import com.emailProcessor.basedomains.dto.EmailDto;
-import com.emailProcessor.basedomains.dto.KeywordDto;
-import com.emailProcessor.emailProcessor.entity.Category;
-import com.emailProcessor.emailProcessor.entity.Keyword;
-import com.emailProcessor.emailProcessor.entity.Sender;
+import com.emailProcessor.basedomains.dto.*;
+import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.KeywordRepository;
 import com.emailProcessor.emailProcessor.service.KeywordService;
 import lombok.AllArgsConstructor;
@@ -13,17 +9,21 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service Implementation for managing {@link com.emailProcessor.emailProcessor.entity.Keyword}.
@@ -39,33 +39,60 @@ public class KeywordServiceImpl implements KeywordService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Keyword save(Keyword keyword) {
-        log.debug("Request to save Keyword : {}", keyword);
-        System.out.println("Request to save Keyword :"+keyword.toString());
-        // Assuming getCategoryId() returns a String
-        Set<Category> categories = keyword.getCategories();
+    @CacheEvict(value = "keyword", allEntries = true )
+    //@CachePut(value = "keyword", key = "'allKeywords'")
+    public Keyword save(KeywordDto keywordDto) {
+        log.debug("Request to save Keyword : {}", keywordDto);
+        System.out.println("Request to save Keyword :"+keywordDto.toString());
+
+        Keyword toSaveResult = new Keyword();
+        if (keywordDto.getWord() != null) {
+            toSaveResult.setWord(keywordDto.getWord());
+        }
+        if (keywordDto.getCreatedBy() != null) {
+            WorkerDto workerDto = keywordDto.getCreatedBy();
+            Worker worker = modelMapper.map(workerDto, Worker.class);
+            toSaveResult.setCreatedBy(worker);
+        }
+        if (keywordDto.getCategories() != null) {
+            List<CategoryDto> categoriesDtos = keywordDto.getCategories();
+            List<Category> categories = categoriesDtos.stream()
+                    .map(categoryDto -> modelMapper.map(categoryDto, Category.class))
+                    .toList();
+            toSaveResult.setCategories(categories);
+        }
+        if (keywordDto.getTranslatedKeywords() != null) {
+            List<TranslatedKeywordDto>  translatedKeywordDtos = keywordDto.getTranslatedKeywords();
+            List<TranslatedKeyword> translatedKeywords = translatedKeywordDtos.stream()
+                    .map(translatedKeyword -> modelMapper.map(translatedKeyword, TranslatedKeyword.class))
+                    .toList();
+            toSaveResult.setTranslatedKeywords(translatedKeywords);
+        }
 
         // Save the Keyword entity
-        Keyword savedKeyword = keywordRepository.save(keyword);
+        Keyword savedKeyword = keywordRepository.save(toSaveResult);
 
         // Update each Category document to include the newly created keyword
-        for (Category category : categories) {
+        for (CategoryDto category : keywordDto.getCategories()) {
             mongoTemplate.update(Category.class)
                     .matching(Criteria.where("categoryId").is(category.getCategoryId()))
                     .apply(new Update().push("keywords").value(savedKeyword.getKeywordId()))
                     .first();
         }
+        updateCachedList(modelMapper.map(savedKeyword, KeywordDto.class));
         return savedKeyword;
     }
 
 
     @Override
+    @CachePut(value = "keyword", key = "'allKeywords'")
     public Keyword update(Keyword keyword) {
         log.debug("Request to update Keyword : {}", keyword);
         return keywordRepository.save(keyword);
     }
 
     @Override
+    @CachePut(value = "keyword", key = "'allKeywords'")
     public Optional<Keyword> partialUpdate(Keyword keyword) {
         log.debug("Request to partially update Keyword : {}", keyword);
 
@@ -85,9 +112,58 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    public List<Keyword> findAllKeywords() {
+    @Cacheable(value = "keyword", key = "'allKeywords'")
+    public List<KeywordDto> findAllKeywords() {
         log.debug("Request to get all Keywords");
-        return keywordRepository.findAll();
+        List<Keyword> keywords =  keywordRepository.findAll();
+        return convertToDto(keywords);
+    }
+
+    private List<KeywordDto> convertToDto(List<Keyword> keywords) {
+        return keywords.stream()
+                .map(this::convertKeywordToDto)
+                .collect(Collectors.toList());
+    }
+
+    private KeywordDto convertKeywordToDto(Keyword keyword) {
+        KeywordDto dto = new KeywordDto();
+        dto.setKeywordId(keyword.getKeywordId());
+        dto.setWord(keyword.getWord());
+        // Null check before mapping Worker to WorkerDto for createdBy
+        // Check if createdBy is not null before mapping
+        if (keyword.getCreatedBy() != null) {
+            WorkerDto createdByDto = new WorkerDto();
+            Worker createdBy = keyword.getCreatedBy();
+
+            // Map non-null fields of createdBy to WorkerDto
+            if (createdBy.getWorkerId() != null) {
+                createdByDto.setWorkerId(createdBy.getWorkerId());
+            }
+            if (createdBy.getFirstName() != null) {
+                createdByDto.setFirstName(createdBy.getFirstName());
+            }
+            if (createdBy.getLastName() != null) {
+                createdByDto.setLastName(createdBy.getLastName());
+            }
+            // Map other fields similarly
+
+            dto.setCreatedBy(createdByDto);
+        }
+        // Null check before mapping categories to CategoryDto
+        if (keyword.getCategories() != null) {
+            List<CategoryDto> categoryDtoList = keyword.getCategories().stream()
+                    .map(category -> modelMapper.map(category, CategoryDto.class))
+                    .collect(Collectors.toList());
+            dto.setCategories(categoryDtoList);
+        }
+        // Null check before mapping translatedKeywords to TranslatedKeywordDto
+        if (keyword.getTranslatedKeywords() != null) {
+            List<TranslatedKeywordDto> translatedKeywordDtoList = keyword.getTranslatedKeywords().stream()
+                    .map(translatedKeyword -> modelMapper.map(translatedKeyword, TranslatedKeywordDto.class))
+                    .collect(Collectors.toList());
+            dto.setTranslatedKeywords(translatedKeywordDtoList);
+        }
+        return dto;
     }
 
     @Override
@@ -107,13 +183,38 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    public ResponseEntity<Void> delete(String id) {
+    @CacheEvict(value = "keyword", allEntries = true )
+    public Map<String, String> delete(String id) {
         log.debug("Request to delete Keyword : {}", id);
+        Map<String, String> response = new HashMap<>();
         if (keywordRepository.existsById(id)) {
+            clearCache();
             keywordRepository.deleteById(id);
-            return ResponseEntity.noContent().build(); // Indicate successful deletion with no body
+            clearCache();
+            response.put("message", "Successful deletion");
         } else {
-            return ResponseEntity.notFound().build(); // Indicate that the resource was not found
+            response.put("message", "the resource was not found");
         }
+        return response;
+    }
+
+
+    @CachePut(value = "keyword", key = "'allKeywords'")
+    private List<KeywordDto> updateCachedList(KeywordDto keywordDto) {
+        List<KeywordDto> cachedList = findAllKeywords();
+        // Find the cachedList with the same ID as the saved/updated object
+        for (int i = 0; i < cachedList.size(); i++) {
+            if (cachedList.get(i).getKeywordId().equals(keywordDto.getKeywordId())) {
+                // Update the cached list
+                cachedList.set(i, keywordDto);
+                break;
+            }
+        }
+        return cachedList ;
+    }
+
+    @CacheEvict(value = "keyword", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

@@ -1,5 +1,6 @@
 package com.emailProcessor.emailProcessor.controller;
 import com.emailProcessor.basedomains.dto.CategoryDto;
+import com.emailProcessor.basedomains.dto.CustomResponse;
 import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
 import com.emailProcessor.emailProcessor.entity.Category;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
@@ -9,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -44,21 +48,20 @@ public class CategoryController {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("")
-    public ResponseEntity<String> createCategory(@Validated @RequestBody Category category) throws Exception {
+    public ResponseEntity<CustomResponse> createCategory(@Validated @RequestBody Category category) throws Exception {
         log.debug("REST request to save Category : {}", category);
         if (category.getCategoryId() != null) {
             throw new Exception("A new category cannot already have an ID");
         }
-
         try {
-            ResponseEntity<String> result = categoryService.saveCategory(category);
-            return result;
-        } catch (BadRequestException e) {
-            log.error("Bad request alert exception", e);
-            return ResponseEntity.badRequest().body("Bad request: " + e.getMessage());
-        } catch (Exception e) {
-            log.error("Error saving sender", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving sender");
+            CategoryDto result = categoryService.saveCategory(category);
+            CustomResponse customResponse = new CustomResponse(result, HttpStatus.CREATED.value(), "category saved successfully");
+            clearCache();
+            return ResponseEntity.status(HttpStatus.CREATED).body(customResponse);
+        }catch (Exception e) {
+            log.error("Error saving category", e);
+            CustomResponse customResponse = new CustomResponse(category, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving category");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
         }
     }
 
@@ -106,6 +109,7 @@ public class CategoryController {
      * or with status {@code 500 (Internal Server Error)} if the category couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
+
     @PatchMapping(value = "/{categoryId}", consumes = { "application/json", "application/merge-patch+json" })
     public ResponseEntity<Optional<Category>> partialUpdateCategory(
         @PathVariable(value = "categoryId", required = false) final String categoryId,
@@ -135,6 +139,7 @@ public class CategoryController {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of categories in body.
      */
     @GetMapping("")
+    //@Cacheable(value = "categories", key = "'categories'")
     public List<CategoryDto> getAllCategories() {
         log.debug("REST request to get all Categories");
         List<Category> categories = categoryService.findAllCategories();
@@ -174,7 +179,15 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable("id") String id) {
         log.debug("REST request to delete Category : {}", id);
+        clearCache();
         categoryService.deleteCategory(id);
+        clearCache();
         return ResponseEntity.status(HttpStatus.OK).body("Saving sender");
+    }
+
+    @GetMapping("/clear_cache")
+    @CacheEvict(value = "categories", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

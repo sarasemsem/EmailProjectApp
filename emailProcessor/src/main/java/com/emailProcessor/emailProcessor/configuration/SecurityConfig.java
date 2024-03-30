@@ -25,16 +25,27 @@ public class SecurityConfig {
     private static final Long MAX_AGE = 3600L;
     private static final int CORS_FILTER_ORDER = -100;
     private final AuthProvider authProvider;
-
+    private static final String[] AUTH_WHITELIST={
+            "/api/v1/auth/**",
+            "/v3/api-docs/**",
+            "/v3/api-docs.yaml",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+    };
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http.csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new JwtAuthFilter(authProvider), BasicAuthenticationFilter.class)
                 .sessionManagement(customizer-> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests((requests)->
-                        requests.requestMatchers(HttpMethod.POST,"/login").permitAll()
-                                .anyRequest().authenticated());
-
+                .authorizeHttpRequests((requests)->{
+                    requests
+                            .requestMatchers(HttpMethod.POST,"/login").permitAll()
+                            .requestMatchers(HttpMethod.GET,"/clear_cache").permitAll()
+                            .requestMatchers("/swagger-ui/**").permitAll()
+                            .requestMatchers(AUTH_WHITELIST).permitAll()
+                            .anyRequest().authenticated();
+                });
+        
         return http.build();
     }
     @Bean
@@ -43,6 +54,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin("http://localhost:8083");
         config.setAllowedHeaders(Arrays.asList(
                 HttpHeaders.AUTHORIZATION,
                 HttpHeaders.CONTENT_TYPE,

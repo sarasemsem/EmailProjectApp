@@ -1,32 +1,50 @@
 package com.emailProcessor.emailProcessor.controller;
 
 import com.emailProcessor.basedomains.dto.EmailDto;
+import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
+import com.emailProcessor.emailProcessor.entity.Email;
+import com.emailProcessor.emailProcessor.repository.EmailRepository;
 import com.emailProcessor.emailProcessor.service.EmailService;
-import org.bson.types.ObjectId;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("api/v1/email")
+@RequiredArgsConstructor
 public class EmailController {
 
+    private final ModelMapper modelMapper;
     @Autowired
     private EmailService emailService;
-    @RequestMapping("retrievedEmails")
+    private final EmailRepository emailRepository;
+    private static final String ENTITY_NAME = "Email";
+    @GetMapping("retrievedEmails")
     public List<EmailDto> getEmails() {
-        return emailService.getAllEmails();
+        List<EmailDto> emails = emailService.getAllEmails();
+        System.out.println(emails.toString());
+        return emails;
     }
+
     @GetMapping("/{emailId}")
     public EmailDto getEmailDetails(@PathVariable Map<String,String> payload) {
         return emailService.getEmailById(payload.get("emailId"));
     }
     @PostMapping
     public ResponseEntity<String> saveEmail(@RequestBody EmailDto emailDto) {
-        return emailService.createEmail(emailDto);
+        Email savedEmail = emailService.createEmail(emailDto);
+        if (savedEmail != null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("Email inserted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to insert the Email");
+        }
     }
 
     @PutMapping("/{id}")
@@ -34,9 +52,36 @@ public class EmailController {
         return emailService.updateEmail(id, emailDto);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmail(@PathVariable String id) {
-        emailService.deleteEmail(id);
-        return ResponseEntity.noContent().build();
+    @PatchMapping("/{id}")
+    public ResponseEntity<Optional<Email>> EmailPartialUpdate(@PathVariable String id, @RequestBody EmailDto emailDto) {
+        System.out.println("REST request to partial update Sender partially :"+ id+ emailDto);
+        if (emailDto.getEmailId() == null) {
+            throw new BadRequestException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!Objects.equals(id, emailDto.getEmailId())) {
+            throw new BadRequestException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!emailRepository.existsById(id)) {
+            throw new BadRequestException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+        Optional<Email> result = emailService.partialUpdate(emailDto);
+
+        return ResponseEntity.ok(Optional.of(result.get()));
+    }
+
+    @DeleteMapping("/delete/{ids}")
+    public ResponseEntity<String> deleteEmails(@PathVariable String[] ids) {
+        clearCache();
+        System.out.println("your here");
+        emailService.deleteEmails(ids);
+        clearCache();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/clear_cache")
+    @CacheEvict(value = "emails", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

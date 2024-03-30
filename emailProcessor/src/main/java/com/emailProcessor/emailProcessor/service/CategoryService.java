@@ -9,7 +9,7 @@ import java.util.Optional;
 @Service
 public interface CategoryService {
 
-    ResponseEntity<String> saveCategory(Category category);
+    CategoryDto saveCategory(Category category);
 
     CategoryDto updateCategory(Category category);
 

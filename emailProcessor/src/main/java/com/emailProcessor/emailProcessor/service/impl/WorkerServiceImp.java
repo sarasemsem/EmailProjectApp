@@ -1,6 +1,7 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.CredentialsDto;
+import com.emailProcessor.basedomains.dto.Worker1Dto;
 import com.emailProcessor.basedomains.dto.WorkerDto;
 import com.emailProcessor.emailProcessor.controller.errors.AppExecption;
 import com.emailProcessor.emailProcessor.entity.Worker;
@@ -44,7 +45,7 @@ public class WorkerServiceImp implements WorkerService {
     }
 
     @Override
-    public ResponseEntity<String> saveWorker(Worker worker) {
+    public ResponseEntity<String> saveWorker(Worker1Dto worker) {
         log.debug("Request to save Worker: {}", worker);
         try {
             Optional<Worker> findWorker = workerRepository.findByEmail(worker.getEmail());

@@ -1,8 +1,7 @@
 package com.emailProcessor.emailProcessor.controller;
-import com.emailProcessor.basedomains.dto.CustomResponse;
-import com.emailProcessor.basedomains.dto.KeywordDto;
+import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
-import com.emailProcessor.emailProcessor.entity.Keyword;
+import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.KeywordRepository;
 import com.emailProcessor.emailProcessor.service.KeywordService;
 import jakarta.validation.Valid;
@@ -11,15 +10,15 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -31,30 +30,26 @@ import java.util.stream.Collectors;
 public class KeywordController {
 
     private final Logger log = LoggerFactory.getLogger(KeywordController.class);
-
     private static final String ENTITY_NAME = "keyword";
     private final KeywordService keywordService;
     private final KeywordRepository keywordRepository;
     private final ModelMapper modelMapper;
 
-
     @PostMapping("")
-    public ResponseEntity<CustomResponse> createKeyword(@Validated @RequestBody Keyword keyword) throws URISyntaxException {
-
-        log.debug("REST request to save Keyword : {}", keyword);
-        System.out.println("REST request to save Keyword : {}"+ keyword);
+    public ResponseEntity<CustomResponse> createKeyword(@Validated @RequestBody KeywordDto keywordDto) throws URISyntaxException {
+        log.debug("REST request to save Keyword : {}", keywordDto);
+        System.out.println("REST request to save Keyword : {}"+ keywordDto);
         try {
-            Keyword result = keywordService.save(keyword);
+            Keyword result = keywordService.save(keywordDto);
             // Create a custom response object with both data and HTTP status
             CustomResponse customResponse = new CustomResponse(result, HttpStatus.CREATED.value(), "Keyword saved successfully");
+            clearCache();
             return ResponseEntity.status(HttpStatus.CREATED).body(customResponse);
         }catch (Exception e) {
-            log.error("Error saving user", e);
-            CustomResponse customResponse = new CustomResponse(keyword, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving keyword");
+            log.error("Error saving Keyword", e);
+            CustomResponse customResponse = new CustomResponse(keywordDto, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving keyword");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
         }
-
-
     }
 
     @PutMapping("/{keywordId}")
@@ -73,13 +68,11 @@ public class KeywordController {
         if (!keywordRepository.existsById(keywordId)) {
             throw new BadRequestException("Entity not found", ENTITY_NAME, "idnotfound");
         }
-
         Keyword result = keywordService.update(keyword);
         return ResponseEntity
                 .ok()
                 .body(result);
     }
-
 
     @PatchMapping(value = "/{keywordId}", consumes = { "application/json", "application/merge-patch+json" })
     public ResponseEntity<Optional<Keyword>> partialUpdateKeyword(
@@ -106,10 +99,9 @@ public class KeywordController {
     @GetMapping("")
     public List<KeywordDto> getAllKeywords() {
         log.debug("REST request to get all Keywords");
-        List<Keyword> keywords = keywordService.findAllKeywords();
-        return keywords.stream()
-                .map(keyword -> modelMapper.map(keyword, KeywordDto.class))
-                .collect(Collectors.toList());
+        List<KeywordDto> keywords = keywordService.findAllKeywords();
+        System.out.println(keywords);
+        return keywords;
     }
 
     /**
@@ -132,8 +124,16 @@ public class KeywordController {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteKeyword(@PathVariable("id") String id) {
+    public ResponseEntity<String> deleteKeyword(@PathVariable("id") String id) {
         log.debug("REST request to delete Keyword : {}", id);
-        return keywordService.delete(id);
+        keywordService.delete(id);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/clear_cache")
+    @CacheEvict(value = "keyword", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

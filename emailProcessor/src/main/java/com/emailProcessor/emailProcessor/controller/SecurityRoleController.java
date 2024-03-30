@@ -10,6 +10,7 @@ import com.emailProcessor.emailProcessor.service.SecurityRoleService;
 import com.mongodb.lang.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -158,8 +159,17 @@ public class SecurityRoleController {
      * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSecurityRole(@PathVariable("id") String id) {
+    public ResponseEntity<String>  deleteSecurityRole(@PathVariable("id") String id) {
         log.debug("REST request to delete SecurityRole : {}", id);
-        return securityRoleService.deleteSecurityRole(id);
+        clearCache();
+         securityRoleService.deleteSecurityRole(id);
+        clearCache();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/clear_cache")
+    @CacheEvict(value = "securityRole", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

@@ -4,6 +4,7 @@ import com.emailProcessor.emailProcessor.entity.Keyword;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -13,10 +14,10 @@ public interface KeywordService {
     /**
      * Save a keyword.
      *
-     * @param keyword the entity to save.
+     * @param keywordDto the entity to save.
      * @return the persisted entity.
      */
-    Keyword save(Keyword keyword);
+    Keyword save(KeywordDto keywordDto);
 
     /**
      * Updates a keyword.
@@ -39,7 +40,7 @@ public interface KeywordService {
      *
      * @return the list of entities.
      */
-    List<Keyword> findAllKeywords();
+    List<KeywordDto> findAllKeywords();
 
     /**
      * Get the "id" keyword.
@@ -57,6 +58,6 @@ public interface KeywordService {
      * @param id the id of the entity.
      * @return
      */
-    ResponseEntity<Void> delete(String id);
+    Map<String, String> delete(String id);
 
 }

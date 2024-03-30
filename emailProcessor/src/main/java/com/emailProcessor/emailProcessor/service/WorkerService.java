@@ -1,5 +1,6 @@
 package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.CredentialsDto;
+import com.emailProcessor.basedomains.dto.Worker1Dto;
 import com.emailProcessor.basedomains.dto.WorkerDto;
 import com.emailProcessor.emailProcessor.entity.Worker;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public interface WorkerService {
      * @param worker the entity to save.
      * @return the persisted entity.
      */
-    ResponseEntity<String> saveWorker(Worker worker);
+    ResponseEntity<String> saveWorker(Worker1Dto worker);
 
     /**
      * Updates a worker.

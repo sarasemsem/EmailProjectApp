@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -26,12 +27,14 @@ public class SenderServiceImp implements SenderService {
     private final ModelMapper modelMapper;
     @Override
     @Transactional
+    //@Cacheable(value = "sender", key = "'allSenders'")
     public Sender saveSender(SenderDto senderDto) {
         log.debug("Request to save Sender : {}", senderDto);
         Sender savedSender = senderRepository.save(modelMapper.map(senderDto, Sender.class));
       return savedSender;
     }
     @Override
+    //@Cacheable(value = "sender", key = "'allSenders'")
     public SenderDto updateSender(SenderDto senderDto) {
         log.debug("Request to update Sender : {}", senderDto);
         Sender sender = senderRepository.save(modelMapper.map(senderDto, Sender.class));
@@ -39,6 +42,7 @@ public class SenderServiceImp implements SenderService {
     }
 
     @Override
+    //@Cacheable(value = "sender", key = "'allSenders'")
     public Optional<Sender> partialUpdateSender(Sender sender) {
         log.debug("Request to partially update Sender : {}", sender);
         System.out.println("Request to partially update Sender : "+ sender);

@@ -1,7 +1,7 @@
 package com.emailProcessor.emailProcessor.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.NotNull;
+import com.mongodb.lang.NonNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +10,11 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.MongoId;
+import org.springframework.data.redis.core.RedisHash;
+
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -27,15 +30,15 @@ public class Keyword implements Serializable{
 
     @MongoId
     private String keywordId;
-    @NotNull
+    @NonNull
     private String word;
     @DBRef
     private Worker createdBy;
-    @JsonIgnoreProperties("keywords")
-    private Set<Category> categories = new HashSet<>();
+    @DBRef
+    private List<Category> categories ;
 
-    @JsonIgnoreProperties(value = { "keyword" }, allowSetters = true)
-    private Set<TranslatedKeyword> translatedKeywords = new HashSet<>();
+    @DBRef
+    private List<TranslatedKeyword> translatedKeywords ;
 
 
 

@@ -1,7 +1,10 @@
 package com.emailProcessor.basedomains.dto;
 
 import lombok.*;
+
+import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -12,14 +15,14 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class KeywordDto {
+public class KeywordDto implements Serializable {
 
     private String keywordId;
     @NonNull
     private String word;
     private WorkerDto createdBy;
-    private Set<CategoryDto> categories = new HashSet<>();
-    private Set<TranslatedKeywordDto> translatedKeywords = new HashSet<>();
+    private List<CategoryDto> categories ;
+    private List<TranslatedKeywordDto> translatedKeywords ;
 
     @Override
     public boolean equals(Object o) {

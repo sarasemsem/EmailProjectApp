@@ -1,4 +1,5 @@
 package com.emailProcessor.emailProcessor.controller;
+import com.emailProcessor.basedomains.dto.Worker1Dto;
 import com.emailProcessor.basedomains.dto.WorkerDto;
 import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
 import com.emailProcessor.emailProcessor.entity.Worker;
@@ -7,6 +8,8 @@ import com.emailProcessor.emailProcessor.service.WorkerService;
 import com.mongodb.lang.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -39,18 +42,16 @@ public class WorkerController {
     /**
      * {@code POST  /workers} : Create a new worker.
      *
-     * @param worker the worker to create.
+     * @param workerDto the worker to create.
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new worker, or with status {@code 400 (Bad Request)} if the worker has already an ID.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("")
-    public ResponseEntity<String> createWorker(@Validated @RequestBody Worker worker) throws URISyntaxException {
-        log.debug("REST request to save Worker : {}", worker);
-        if (worker.getWorkerId() != null) {
-            throw new BadRequestException("A new worker cannot already have an ID", ENTITY_NAME, "idexists");
-        }
+    public ResponseEntity<String> createWorker(@Validated @RequestBody Worker1Dto workerDto) throws URISyntaxException {
+        log.debug("REST request to save Worker : {}", workerDto);
+
         try {
-            ResponseEntity<String> result = workerService.saveWorker(worker);
+            ResponseEntity<String> result = workerService.saveWorker(workerDto);
             return result;
         } catch (BadRequestException e) {
             log.error("Bad request alert exception", e);
@@ -133,6 +134,7 @@ public class WorkerController {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of workers in body.
      */
     @GetMapping("")
+    @Cacheable(value = "workers", key = "'workers'")
     public List<Worker> getAllWorkers() {
         log.debug("REST request to get all Workers");
         return workerService.findAllWorkers();
@@ -164,5 +166,11 @@ public class WorkerController {
         log.debug("REST request to delete Worker : {}", id);
         workerService.deleteWorker(id);
         return ResponseEntity.status(HttpStatus.OK).body("deleted worker");
+    }
+
+    @GetMapping("/clear_cache")
+    @CacheEvict(value = "workers", allEntries = true )
+    public String clearCache(){
+        return "Cache has been cleared";
     }
 }

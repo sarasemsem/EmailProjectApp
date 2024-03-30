@@ -3,13 +3,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.io.Serializable;
 import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class EmailProcessingResultDto {
+public class EmailProcessingResultDto implements Serializable {
     private String id;
     private List<CategoryDto> proposedCategories;
     private List<CategoryDto> selectedCategories;

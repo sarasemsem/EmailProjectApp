@@ -2,6 +2,7 @@ package com.emailProcessor.emailProcessor.service;
 
 import com.emailProcessor.basedomains.dto.EmailDto;
 import com.emailProcessor.basedomains.dto.EmailEvent;
+import com.emailProcessor.emailProcessor.entity.Email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +36,8 @@ public class EmailConsumer {
     public void consumeEmail(EmailDto emailDto) {
         try {
             // Save email to the database
-            ResponseEntity<String> savingEmail= emailService.createEmail(emailDto);
-            System.out.println("Email saving to the database: " + savingEmail.getBody());
+            Email savingEmail= emailService.createEmail(emailDto);
+            System.out.println("Email saving to the database: " + savingEmail);
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -22,6 +22,9 @@ public class CategoryDto implements Serializable {
     private String description;
     private List<String> keywords ;
 
+    public CategoryDto(String categoryId) {
+        this.categoryId = categoryId;
+    }
     @Override
     public int hashCode() {
         return getClass().hashCode();

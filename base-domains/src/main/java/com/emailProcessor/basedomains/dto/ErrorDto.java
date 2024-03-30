@@ -1,4 +1,6 @@
 package com.emailProcessor.basedomains.dto;
 
-public record ErrorDto (String message) {
+import java.io.Serializable;
+
+public record ErrorDto (String message) implements Serializable {
 }
