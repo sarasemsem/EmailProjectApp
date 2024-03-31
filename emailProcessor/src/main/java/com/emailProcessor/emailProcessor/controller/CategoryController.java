@@ -182,7 +182,7 @@ public class CategoryController {
         clearCache();
         categoryService.deleteCategory(id);
         clearCache();
-        return ResponseEntity.status(HttpStatus.OK).body("Saving sender");
+        return ResponseEntity.status(HttpStatus.OK).body("deleted Category");
     }
 
     @GetMapping("/clear_cache")

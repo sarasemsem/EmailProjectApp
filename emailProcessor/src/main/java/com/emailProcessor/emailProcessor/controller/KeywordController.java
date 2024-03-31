@@ -127,7 +127,6 @@ public class KeywordController {
     public ResponseEntity<String> deleteKeyword(@PathVariable("id") String id) {
         log.debug("REST request to delete Keyword : {}", id);
         keywordService.delete(id);
-
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

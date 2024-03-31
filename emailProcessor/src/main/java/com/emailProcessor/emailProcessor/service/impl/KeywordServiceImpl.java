@@ -2,6 +2,7 @@ package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.entity.*;
+import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.repository.KeywordRepository;
 import com.emailProcessor.emailProcessor.service.KeywordService;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,7 @@ public class KeywordServiceImpl implements KeywordService {
     @Autowired
     private MongoTemplate mongoTemplate;
     private final KeywordRepository keywordRepository;
+    private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -46,9 +48,10 @@ public class KeywordServiceImpl implements KeywordService {
         System.out.println("Request to save Keyword :"+keywordDto.toString());
 
         Keyword toSaveResult = new Keyword();
-        if (keywordDto.getWord() != null) {
+
             toSaveResult.setWord(keywordDto.getWord());
-        }
+            toSaveResult.setWeight(keywordDto.getWeight());
+
         if (keywordDto.getCreatedBy() != null) {
             WorkerDto workerDto = keywordDto.getCreatedBy();
             Worker worker = modelMapper.map(workerDto, Worker.class);
@@ -148,6 +151,7 @@ public class KeywordServiceImpl implements KeywordService {
             // Map other fields similarly
 
             dto.setCreatedBy(createdByDto);
+            dto.setWeight(keyword.getWeight());
         }
         // Null check before mapping categories to CategoryDto
         if (keyword.getCategories() != null) {
@@ -187,13 +191,26 @@ public class KeywordServiceImpl implements KeywordService {
     public Map<String, String> delete(String id) {
         log.debug("Request to delete Keyword : {}", id);
         Map<String, String> response = new HashMap<>();
-        if (keywordRepository.existsById(id)) {
+
+        Optional<Keyword> keywordOptional = keywordRepository.findById(id);
+        if (keywordOptional.isPresent()) {
+            Keyword keyword = keywordOptional.get();
+
+            // Remove keyword ID from associated categories
+            for (Category category : keyword.getCategories()) {
+                category.getKeywords().remove(id);
+            }
+
+            // Save the updated categories
+            categoryRepository.saveAll(keyword.getCategories());
+            // Delete the keyword
             clearCache();
             keywordRepository.deleteById(id);
             clearCache();
+
             response.put("message", "Successful deletion");
         } else {
-            response.put("message", "the resource was not found");
+            response.put("message", "The resource was not found");
         }
         return response;
     }

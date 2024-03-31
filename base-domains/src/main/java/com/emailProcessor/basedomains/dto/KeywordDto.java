@@ -20,7 +20,10 @@ public class KeywordDto implements Serializable {
     private String keywordId;
     @NonNull
     private String word;
+    @NonNull
     private WorkerDto createdBy;
+    @NonNull
+    private int weight ;
     private List<CategoryDto> categories ;
     private List<TranslatedKeywordDto> translatedKeywords ;
 
