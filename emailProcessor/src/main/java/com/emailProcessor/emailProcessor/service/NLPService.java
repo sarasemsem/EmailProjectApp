@@ -38,7 +38,8 @@ public class NLPService {
             e.printStackTrace();
         }
     }
-    private void treatEmail(EmailDto email) {
+
+    public void treatEmail(EmailDto email) {
         try {
             StanfordCoreNLP stanfordCoreNLP = Pipeline.getPipeline();
             String emailContent = email.getContent();
@@ -47,7 +48,7 @@ public class NLPService {
 
             // Extracting individual words and processing them
             List<CoreLabel> coreLabelList = coreDocument.tokens();
-            List<String> categoryIds = new ArrayList<>();
+            Map<String, Double> categoryScores = new HashMap<>();
             List<KeywordDto> foundKeywords = new ArrayList<>();
 
             // Iterate through coreLabelList and extract category IDs
@@ -56,88 +57,66 @@ public class NLPService {
                 if (word.matches("[a-zA-Z0-9]{2,}")) {
                     Optional<KeywordDto> keyword = keywordService.findKeywordByWord(word);
                     keyword.ifPresent(k -> {
-                                foundKeywords.add(k);
-                                categoryIds.addAll(k.getCategories().stream()
-                                        .map(CategoryDto::getCategoryId)
-                                        .toList());
+                        foundKeywords.add(k);
+                        if (k.getCategories() != null) {
+                            for (CategoryDto category : k.getCategories()) {
+                                double weight = k.getWeight();
+                                categoryScores.put(category.getCategoryId(), categoryScores.getOrDefault(category.getCategoryId(), 0.0) + weight);
                             }
-                    );
+                        }
+                    });
                 }
             }
-            if (!categoryIds.isEmpty()) {
-            // Iterate over the list and print each element
-            System.out.println("Contents of categoryIds list:");
-            for (String categoryId : categoryIds) {
-                System.out.println(categoryId);
-            }
 
-            // Creat a map to store category counts
-            Map<String, Integer> categoryCounts = new HashMap<>();
-
-            // Iterate through categoryIds and count occurrences
-            for (String categoryId : categoryIds) {
-                categoryCounts.put(categoryId, categoryCounts.getOrDefault(categoryId, 0) + 1);
-            }
-            // Iterate over the map entries and print each key-value pair
-            System.out.println("Contents of categoryCounts map:");
-            for (Map.Entry<String, Integer> entry : categoryCounts.entrySet()) {
-                System.out.println("Category ID: " + entry.getKey() + ", Count: " + entry.getValue());
-            }
-
-            // Create lists to store proposed and selected categories
-            List<CategoryDto> proposedCategories = new ArrayList<>();
-            List<CategoryDto> selectedCategories = new ArrayList<>();
-
-            // Sort the category counts by value in descending order
-            List<Map.Entry<String, Integer>> sortedCategoryCounts = new ArrayList<>(categoryCounts.entrySet());
-            sortedCategoryCounts.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-
-            // Iterate over the sorted list of entries and print each key-value pair
-            System.out.println("Sorted category counts:");
-            for (Map.Entry<String, Integer> entry : sortedCategoryCounts) {
-                System.out.println("Category ID: " + entry.getKey() + ", Count: " + entry.getValue());
-
-                String categoryId = entry.getKey();
-                Optional<CategoryDto> category = categoryService.findOneCategory(categoryId);
-                category.ifPresent(proposedCategories::add);
-            }
-
-
-            // Add categories to proposedCategories and selectedCategories
-            int count = 0;
-            for (Map.Entry<String, Integer> entry : sortedCategoryCounts) {
-                if (count < 2) {
-                    System.out.println(count);
-                    String categoryId = entry.getKey();
-                    System.out.println("categoryId :" + categoryId);
-                    Optional<CategoryDto> category = categoryService.findOneCategory(categoryId);
-                    System.out.println(category.get());
-                    category.ifPresent(selectedCategories::add);
-                    count++;
+            if (!categoryScores.isEmpty()) {
+                // Normalize the scores to percentages
+                double maxPossibleScore = foundKeywords.size(); // Assuming each keyword has a maximum weight of 1
+                Map<String, Double> normalizedScores = new HashMap<>();
+                for (Map.Entry<String, Double> entry : categoryScores.entrySet()) {
+                    double normalizedScore = (entry.getValue() / maxPossibleScore) * 100.0;
+                    normalizedScores.put(entry.getKey(), normalizedScore);
                 }
-                // Break after adding the top 2 categories
-                if (count >= 2) {
-                    break;
-                }
-            }
-            // Iterate over the selectedCategories list and print each CategoryDto object
-            System.out.println("Selected categories:");
-            for (CategoryDto categoryDto : selectedCategories) {
-                System.out.println(categoryDto); // Assuming CategoryDto has overridden toString() method
-            }
 
-            // Create EmailProcessingResult object and set categories and keywords
-            EmailProcessingResultDto emailProcessingResult = new EmailProcessingResultDto();
-            emailProcessingResult.setProposedCategories(proposedCategories);
-            emailProcessingResult.setSelectedCategories(selectedCategories);
-            emailProcessingResult.setFoundKeywords(foundKeywords);
-            // Save the EmailProcessingResult to MongoDB
-            EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
-            // Update email with treated flag
-            email.setResult(savedEmailProcessingResult);
-            email.setTreated(true);
-            emailService.partialUpdate(email);
-    }
+                // Filter out categories with normalized scores below 50%
+                Map<String, Double> filteredScores = normalizedScores.entrySet().stream()
+                        .filter(entry -> entry.getValue() >= 50.0)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Sort the filtered scores in descending order
+                List<Map.Entry<String, Double>> sortedFilteredScores = new ArrayList<>(filteredScores.entrySet());
+                sortedFilteredScores.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+                // Select top categories based on filtered scores
+                List<CategoryDto> proposedCategories = new ArrayList<>();
+                List<CategoryDto> selectedCategories = new ArrayList<>();
+                int count = 0;
+                for (Map.Entry<String, Double> entry : sortedFilteredScores) {
+                    if (count < 2) {
+                        String categoryId = entry.getKey();
+                        Optional<CategoryDto> category = categoryService.findOneCategory(categoryId);
+                        category.ifPresent(selectedCategories::add);
+                        count++;
+                    }
+                    // Break after adding the top 2 categories
+                    if (count >= 2) {
+                        break;
+                    }
+                }
+
+                // Create EmailProcessingResult object and set categories and keywords
+                EmailProcessingResultDto emailProcessingResult = new EmailProcessingResultDto();
+                emailProcessingResult.setProposedCategories(proposedCategories);
+                emailProcessingResult.setSelectedCategories(selectedCategories);
+                emailProcessingResult.setFoundKeywords(foundKeywords);
+
+                // Save the EmailProcessingResult to MongoDB
+                EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
+
+                // Update email with treated flag
+                email.setResult(savedEmailProcessingResult);
+                email.setTreated(true);
+                emailService.partialUpdate(email);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

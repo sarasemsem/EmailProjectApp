@@ -34,7 +34,7 @@ public class Keyword implements Serializable{
     private String word;
     @DBRef
     private Worker createdBy;
-    private int weight ;
+    private Double weight ;
     @DBRef
     private List<Category> categories ;
 

@@ -23,7 +23,7 @@ public class KeywordDto implements Serializable {
     @NonNull
     private WorkerDto createdBy;
     @NonNull
-    private int weight ;
+    private Double weight ;
     private List<CategoryDto> categories ;
     private List<TranslatedKeywordDto> translatedKeywords ;
 
