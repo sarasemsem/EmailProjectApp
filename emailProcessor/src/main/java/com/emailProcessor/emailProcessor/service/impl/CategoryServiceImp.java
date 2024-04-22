@@ -1,20 +1,14 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.CategoryDto;
-import com.emailProcessor.basedomains.dto.EmailDto;
 import com.emailProcessor.emailProcessor.entity.Category;
-import com.emailProcessor.emailProcessor.entity.Sender;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;

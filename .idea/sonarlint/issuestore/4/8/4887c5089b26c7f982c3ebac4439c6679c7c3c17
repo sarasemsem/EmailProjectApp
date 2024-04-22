@@ -1,0 +1,14 @@
+
+g	java:S112["FDefine and throw a dedicated exception instead of using a generic one.(›½Èªÿÿÿÿÿ8ñüß—ğ1
+œ	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(‡Ÿ®ù8åÚ×—ğ1J$cb6cb029-8467-48e8-9fd4-62f9e3bd3d2b
+…
+java:S6813'"BRemove this field injection and use constructor injection instead.(êæÄŞ8›Û×—ğ1J$7e01b389-8277-4db0-a4af-c92cf9098cdb
+G	java:S1063"+Replace this use of System.out by a logger.(Öİü‡8†şß—ğ1
+u
+java:S2139Y"XEither log this exception and handle it, or rethrow it with some contextual information.(”ı¾8şß—ğ1
+–
+java:S6204‡"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8¬Û×—ğ1J$6cc01dd6-ef94-44d3-81e5-4c6ee3c45766
+–
+java:S6204§"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8±Û×—ğ1J$82a5ee7d-74cc-48ae-b51a-2c3f2cbd17b6
+–
+java:S6204®"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8²Û×—ğ1J$9549d1b7-80be-48c3-8126-08d38fc33184

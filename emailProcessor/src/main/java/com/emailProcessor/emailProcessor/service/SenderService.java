@@ -49,6 +49,7 @@ public interface SenderService {
      * @return the entity.
      */
     Optional<Sender> findOneSender(String id);
+    Optional<Sender> findByEmail(String email);
 
     /**
      * Delete the "id" sender.

@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +28,27 @@ public class EmailController {
     @GetMapping("retrievedEmails")
     public List<EmailDto> getEmails() {
         List<EmailDto> emails = emailService.getAllEmails();
+        System.out.println(emails.toString());
+        return emails;
+    }
+
+    @GetMapping("/treatedEmails")
+    public List<EmailDto> getTreatedEmails() {
+        List<EmailDto> emails = emailService.getTreatedEmails();
+        System.out.println(emails.toString());
+        return emails;
+    }
+
+    @GetMapping("/untreatedEmails")
+    public List<EmailDto> getUntreatedEmails() {
+        List<EmailDto> emails = emailService.getAllUntreatedEmails();
+        System.out.println(emails.toString());
+        return emails;
+    }
+
+    @GetMapping("/urgentEmails")
+    public List<EmailDto> urgentEmails() {
+        List<EmailDto> emails = emailService.getUrgentEmails();
         System.out.println(emails.toString());
         return emails;
     }
@@ -53,7 +73,7 @@ public class EmailController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Optional<Email>> EmailPartialUpdate(@PathVariable String id, @RequestBody EmailDto emailDto) {
+    public ResponseEntity<Optional<Email>> emailPartialUpdate(@PathVariable String id, @RequestBody EmailDto emailDto) {
         System.out.println("REST request to partial update Sender partially :"+ id+ emailDto);
         if (emailDto.getEmailId() == null) {
             throw new BadRequestException("Invalid id", ENTITY_NAME, "idnull");

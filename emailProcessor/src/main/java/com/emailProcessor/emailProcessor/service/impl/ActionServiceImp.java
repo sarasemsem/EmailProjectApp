@@ -1,12 +1,9 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.ActionDto;
-import com.emailProcessor.basedomains.dto.CategoryDto;
 import com.emailProcessor.emailProcessor.entity.Action;
-import com.emailProcessor.emailProcessor.entity.Category;
 import com.emailProcessor.emailProcessor.repository.ActionRepository;
 import com.emailProcessor.emailProcessor.service.ActionService;
-import com.emailProcessor.emailProcessor.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;

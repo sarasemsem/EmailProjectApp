@@ -1,7 +1,6 @@
 package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.CategoryDto;
 import com.emailProcessor.emailProcessor.entity.Category;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

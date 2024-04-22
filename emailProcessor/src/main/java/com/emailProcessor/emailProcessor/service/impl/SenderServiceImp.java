@@ -8,8 +8,6 @@ import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +84,12 @@ public class SenderServiceImp implements SenderService {
     public List<Sender> findAllSenders() {
         log.debug("Request to get all Senders");
         return senderRepository.findAll();
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Sender> findByEmail(String email) {
+        log.debug("Request to get Sender : {}", email);
+        return senderRepository.findSenderBySenderEmail(email);
     }
 
     @Override

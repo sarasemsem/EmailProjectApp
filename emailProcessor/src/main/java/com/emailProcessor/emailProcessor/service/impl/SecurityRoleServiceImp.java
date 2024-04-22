@@ -1,16 +1,13 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.SecurityRoleDto;
-import com.emailProcessor.basedomains.dto.WorkerDto;
 import com.emailProcessor.emailProcessor.entity.SecurityRole;
-import com.emailProcessor.emailProcessor.entity.Sender;
 import com.emailProcessor.emailProcessor.repository.SecurityRoleRepository;
 import com.emailProcessor.emailProcessor.service.SecurityRoleService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

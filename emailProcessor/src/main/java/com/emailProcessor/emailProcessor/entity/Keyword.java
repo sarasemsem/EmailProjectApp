@@ -1,21 +1,17 @@
 package com.emailProcessor.emailProcessor.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mongodb.lang.NonNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.MongoId;
-import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A Keyword.
@@ -32,14 +28,15 @@ public class Keyword implements Serializable{
     private String keywordId;
     @NonNull
     private String word;
+    @NonNull
     @DBRef
     private Worker createdBy;
     private Double weight ;
+    @NonNull
     @DBRef
     private List<Category> categories ;
-
     @DBRef
-    private List<TranslatedKeyword> translatedKeywords ;
+    private transient List<TranslatedKeyword> translatedKeywords ;
 
 
 

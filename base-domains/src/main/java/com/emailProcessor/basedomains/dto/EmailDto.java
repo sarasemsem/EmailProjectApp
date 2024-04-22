@@ -20,6 +20,7 @@ public class EmailDto implements Serializable {
     private String originalContent;
     private String content;
     private Boolean isRead = false;
+    private Boolean urgent = false;
     private Instant date;
     private EmailProcessingResultDto result;
     private Boolean treated = false;

@@ -1,7 +1,6 @@
 package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.entity.Keyword;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;

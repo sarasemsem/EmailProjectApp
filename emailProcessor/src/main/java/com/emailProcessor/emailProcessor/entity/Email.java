@@ -2,13 +2,12 @@ package com.emailProcessor.emailProcessor.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
-import com.mongodb.lang.NonNull;
+
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.redis.core.RedisHash;
 
 //@Entity
 @Getter
@@ -32,6 +31,8 @@ public class Email implements Serializable {
     private String content;
     @Indexed
     private Boolean isRead = false;
+    @Indexed
+    private Boolean urgent = false;
     @Indexed
     private Instant date;
     @Indexed(sparse = true)

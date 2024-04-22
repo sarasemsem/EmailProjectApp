@@ -1,0 +1,15 @@
+
+•	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(‡Ÿ®ùJ$7372b2b3-ef61-4259-b43d-f1fa5628f976
+~
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄŞJ$b38f6398-c4d3-4d3c-887f-0ca9866395dd
+•
+java:S6204*"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8‡ÏŸ–ğ1J$8e1c51a1-d1e5-4ab0-92c7-430ad7ab4956
+f	java:S106k"+Replace this use of System.out by a logger.(¶ŠëJ$c3361c31-ccd0-4416-82a5-705c60a9ef77
+–
+java:S6204”"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8ˆÏŸ–ğ1J$0ce7fb93-6b68-49be-bd1f-bb131fc49a5b
+–
+java:S6204›"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8‰ÏŸ–ğ1J$b7667b65-ecfd-4daa-90d1-a862cbe01ec7
+–
+java:S6204¢"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹8Ó¤¦–ğ1J$06890383-3bb0-463d-bad0-e6853ed16cbb
+h
+java:S1128"KRemove this unused import 'org.springframework.cache.annotation.Cacheable'.(İºØ“8‡Õ®–ğ1

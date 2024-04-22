@@ -6,7 +6,6 @@ import com.emailProcessor.emailProcessor.configuration.AuthProvider;
 import com.emailProcessor.emailProcessor.service.WorkerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;

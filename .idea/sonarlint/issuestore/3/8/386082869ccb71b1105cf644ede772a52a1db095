@@ -1,0 +1,17 @@
+
+t	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ôÅõàÿÿÿÿÿ
+n
+java:S1128"XRemove this unused import 'org.springframework.boot.web.servlet.FilterRegistrationBean'.(×±Ñ¡
+\
+java:S1128"ARemove this unused import 'org.springframework.http.HttpHeaders'.(ãŸñ×úÿÿÿÿ
+[
+java:S1128"@Remove this unused import 'org.springframework.http.HttpMethod'.(Ê¨Ä¡øÿÿÿÿ
+`
+java:S1128	"KRemove this unused import 'org.springframework.web.cors.CorsConfiguration'.(î¤·`
+t
+java:S1128
+"YRemove this unused import 'org.springframework.web.cors.UrlBasedCorsConfigurationSource'.(µ²Ýûùÿÿÿÿ
+a
+java:S1128"FRemove this unused import 'org.springframework.web.filter.CorsFilter'.(¨­ŸØøÿÿÿÿ
+H
+java:S1128"-Remove this unused import 'java.util.Arrays'.(î–˜Éüÿÿÿÿ

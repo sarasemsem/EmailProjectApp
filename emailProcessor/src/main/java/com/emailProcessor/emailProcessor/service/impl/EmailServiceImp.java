@@ -3,9 +3,11 @@ package com.emailProcessor.emailProcessor.service.impl;
 import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.entity.Email;
 import com.emailProcessor.emailProcessor.entity.EmailProcessingResult;
+import com.emailProcessor.emailProcessor.entity.Sender;
 import com.emailProcessor.emailProcessor.repository.EmailProcessingResultRepository;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
 import com.emailProcessor.emailProcessor.service.EmailService;
+import com.emailProcessor.emailProcessor.service.SenderService;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.slf4j.Logger;
@@ -25,20 +27,24 @@ import java.util.stream.Collectors;
 public class EmailServiceImp implements EmailService {
     @Autowired
     private EmailRepository emailRepository;
+    private SenderService senderService;
 
     private final ModelMapper modelMapper;
     private final Logger log = LoggerFactory.getLogger(EmailServiceImp.class);
     private final EmailProcessingResultRepository emailProcessingResultRepository;
-
+    //@Cacheable(value = "emails", key = "'allEmails'")
     @Override
-    @Cacheable(value = "emails", key = "'allEmails'")
     public List<EmailDto> getAllEmails() {
-        List<Email> emails = emailRepository.findAll(Sort.by(Sort.Direction.DESC, "timestamp"));
-        return emails.stream()
-                .map(this::convertToDto)
-                .toList();
-}
-
+        try {
+            List<Email> emails = emailRepository.findAll(Sort.by(Sort.Direction.DESC, "timestamp"));
+            return emails.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error occurred while retrieving emails: {}", e.getMessage());
+            return Collections.emptyList(); // Return an empty list if an error occurs
+        }
+    }
     private EmailDto convertToDto(Email email) {
         if (email == null) {
             return null; // or throw an exception, depending on your requirements
@@ -51,6 +57,8 @@ public class EmailServiceImp implements EmailService {
         dto.setOriginalContent(email.getOriginalContent());
         dto.setIsRead(email.getIsRead());
         dto.setDate(email.getDate());
+        dto.setTreated(email.getTreated());
+        dto.setUrgent(email.getUrgent());
 
         // Null check before mapping EmailProcessingResult to EmailProcessingResultDto
         if (email.getResult() != null) {
@@ -70,7 +78,6 @@ public class EmailServiceImp implements EmailService {
             dto.setResult(resultDto);
         }
 
-        dto.setTreated(email.getTreated());
         // Null check before mapping Sender to SenderDto
         if (email.getContact() != null) {
             dto.setContact(modelMapper.map(email.getContact(), SenderDto.class));
@@ -88,16 +95,17 @@ public class EmailServiceImp implements EmailService {
     @Override
     @CachePut(value = "emails", key = "'allEmails'")
     public Email createEmail(EmailDto emailDto) {
+        Optional<Sender> sender = senderService.findByEmail(emailDto.getSender()) ;
+        sender.ifPresent(value -> emailDto.setContact(modelMapper.map(value, SenderDto.class)));
         Email email = modelMapper.map(emailDto, Email.class);
         return emailRepository.save(email);
     }
 
     @Override
-    @CachePut(value = "emails", key = "'allEmails'")
     public Optional<Email> partialUpdate(EmailDto emailDto) {
         log.debug("Request to partially update Email : {}", emailDto);
         System.out.println("emails : " + emailDto);
-        updateCachedEmailList(emailDto);
+
         return emailRepository
                 .findById(emailDto.getEmailId())
                 .map(existingEmail -> {
@@ -121,12 +129,24 @@ public class EmailServiceImp implements EmailService {
                     if (emailDto.getTreated() != null) {
                         existingEmail.setTreated(emailDto.getTreated());
                     }
-                    return existingEmail;
-                })
-                .map(emailRepository::save);
+                    // Save the email in the repository
+                    Email savedEmail = emailRepository.save(existingEmail);
+
+                    // Call updateCachedEmailList after saving the email
+                    updateCachedEmailList(emailDto);
+
+                    return savedEmail;
+                });
     }
 
 
+    @Override
+    public List<EmailDto> getTreatedEmails() {
+        List<Email> emails = emailRepository.findByTreatedTrue();
+        return emails.stream()
+                .map(email -> modelMapper.map(email, EmailDto.class))
+                .collect(Collectors.toList());
+    }
     @Override
     public List<EmailDto> getAllUntreatedEmails() {
         List<Email> emails = emailRepository.findByTreatedFalse();
@@ -134,9 +154,15 @@ public class EmailServiceImp implements EmailService {
                 .map(email -> modelMapper.map(email, EmailDto.class))
                 .collect(Collectors.toList());
     }
+    @Override
+    public List<EmailDto> getUrgentEmails(){
+        List<Email> emails = emailRepository.findByUrgentTrue();
+        return emails.stream()
+                .map(email -> modelMapper.map(email, EmailDto.class))
+                .collect(Collectors.toList());
+    }
 
     @Override
-    @CachePut(value = "emails", key = "'allEmails'")
     public EmailDto updateEmail(String id, EmailDto emailDto) {
         Email existingEmail = emailRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("email not found with id: " + id));
@@ -150,20 +176,30 @@ public class EmailServiceImp implements EmailService {
         updateCachedEmailList(emailDto);
         return modelMapper.map(updatedEmail, EmailDto.class);
     }
+
+
     // Helper method to update the cached list when an email is saved/updated
     @CachePut(value = "emails", key = "'allEmails'")
     private List<EmailDto> updateCachedEmailList(EmailDto emailDto) {
+        // Get the current list of emails from the cache
         List<EmailDto> cachedEmails = getAllEmails();
+
+        // Create a new list to hold the updated emails
+        List<EmailDto> updatedEmails = new ArrayList<>(cachedEmails);
+
         // Find the email with the same ID as the saved/updated email
-        for (int i = 0; i < cachedEmails.size(); i++) {
-            if (cachedEmails.get(i).getEmailId().equals(emailDto.getEmailId())) {
-                // Update the email in the cached list
-                cachedEmails.set(i, emailDto);
+        for (int i = 0; i < updatedEmails.size(); i++) {
+            if (updatedEmails.get(i).getEmailId().equals(emailDto.getEmailId())) {
+                // Update the email in the new list
+                updatedEmails.set(i, emailDto);
                 break;
             }
         }
-        return cachedEmails ;
+        // Return the updated list of emails
+        return updatedEmails;
     }
+
+
     @Override
     public void deleteEmails(String[] ids) {
         for (String id : ids) {

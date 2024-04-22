@@ -16,4 +16,5 @@ public class EmailProcessingResultDto implements Serializable {
     private List<CategoryDto> proposedCategories;
     private List<CategoryDto> selectedCategories;
     private List<KeywordDto> foundKeywords;
+    private Double score ;
 }

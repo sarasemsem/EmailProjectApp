@@ -1,0 +1,13 @@
+
+	java:S112w"FDefine and throw a dedicated exception instead of using a generic one.(Ò‚Òéüÿÿÿÿ8ŒÀºŠğ1J$44da2d07-2abc-4519-adfd-dd091f93521b
+…
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄŞ8˜…²Šğ1J$8c1e3579-b82e-4680-9db8-fed1f6291409
+…
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄŞ8™…²Šğ1J$6f6e4ddc-be7b-4887-b563-4abf8191477d
+r	java:S1061"+Replace this use of System.out by a logger.( Û¼ûÿÿÿÿ8 …²Šğ1J$a0e0371b-1bb9-40cb-bb20-5cccd8fba58b
+m	java:S106M"+Replace this use of System.out by a logger.(äÑ§å8¥…²Šğ1J$bb663cff-e05c-4432-b35c-137d9914d6ca
+m	java:S106Q"+Replace this use of System.out by a logger.(›ßáØ8¥…²Šğ1J$00ddfe39-4123-48e7-9013-7bdccbd8a45e
+r	java:S106]"+Replace this use of System.out by a logger.(µØÌöıÿÿÿÿ8§…²Šğ1J$e4de2009-019d-4852-9506-98356d702381
+m	java:S106`"+Replace this use of System.out by a logger.(…öê§8§…²Šğ1J$50456e5c-9aa0-49ce-90ee-c93e4e68f597
+ 
+java:S2139r"XEither log this exception and handle it, or rethrow it with some contextual information.(÷š™ªùÿÿÿÿ8éÃŠğ1J$735f875b-29c8-4fae-9516-d34c4a30db16

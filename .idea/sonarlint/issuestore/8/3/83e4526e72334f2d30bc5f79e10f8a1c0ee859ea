@@ -1,0 +1,21 @@
+
+`	java:S112u"FDefine and throw a dedicated exception instead of using a generic one.(Ò‚Òéüÿÿÿÿ
+o	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ÅªåÝ
+X
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄÞ
+v
+java:S2229F"["processMessage's" @Transactional requirement is incompatible with the one for this method.(ÏÆþÊýÿÿÿÿ
+y
+java:S2142s"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(÷š™ªùÿÿÿÿ
+E	java:S1061"+Replace this use of System.out by a logger.(ž Û¼ûÿÿÿÿ
+p
+java:S6809F"UCall transactional methods via an injected dependency instead of directly via 'this'.(ÏÆþÊýÿÿÿÿ
+@	java:S106N"+Replace this use of System.out by a logger.(äÑ§å
+@	java:S106R"+Replace this use of System.out by a logger.(›ßáØ
+E	java:S106^"+Replace this use of System.out by a logger.(µØÌöýÿÿÿÿ
+@	java:S106a"+Replace this use of System.out by a logger.(…öê§
+F	java:S106Œ"+Replace this use of System.out by a logger.(ÇÝ–Øøÿÿÿÿ
+c
+java:S6201˜"LReplace this instanceof check and cast with 'instanceof Multipart multipart'(·Ï«×
+W	java:S125¯"<This block of commented-out lines of code should be removed.(ÈÞÆ¹ýÿÿÿÿ
+A	java:S106²"+Replace this use of System.out by a logger.(Þï±Ñ

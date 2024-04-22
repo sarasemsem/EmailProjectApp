@@ -5,13 +5,10 @@ import com.emailProcessor.basedomains.dto.EmailDto;
 import com.emailProcessor.basedomains.dto.EmailProcessingResultDto;
 import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.configuration.Pipeline;
-import com.emailProcessor.emailProcessor.entity.Category;
-import com.emailProcessor.emailProcessor.entity.EmailProcessingResult;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -62,6 +59,9 @@ public class NLPService {
                             for (CategoryDto category : k.getCategories()) {
                                 double weight = k.getWeight();
                                 categoryScores.put(category.getCategoryId(), categoryScores.getOrDefault(category.getCategoryId(), 0.0) + weight);
+                                if (Objects.equals(category.getTitle(), "Urgent")) {
+                                    email.setUrgent(true);
+                                }
                             }
                         }
                     });
@@ -89,8 +89,10 @@ public class NLPService {
                 // Select top categories based on filtered scores
                 List<CategoryDto> proposedCategories = new ArrayList<>();
                 List<CategoryDto> selectedCategories = new ArrayList<>();
+                double score = (double) 0;
                 int count = 0;
                 for (Map.Entry<String, Double> entry : sortedFilteredScores) {
+                    score= score + entry.getValue();
                     if (count < 2) {
                         String categoryId = entry.getKey();
                         Optional<CategoryDto> category = categoryService.findOneCategory(categoryId);
@@ -108,6 +110,7 @@ public class NLPService {
                 emailProcessingResult.setProposedCategories(proposedCategories);
                 emailProcessingResult.setSelectedCategories(selectedCategories);
                 emailProcessingResult.setFoundKeywords(foundKeywords);
+                emailProcessingResult.setScore(score);
 
                 // Save the EmailProcessingResult to MongoDB
                 EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);

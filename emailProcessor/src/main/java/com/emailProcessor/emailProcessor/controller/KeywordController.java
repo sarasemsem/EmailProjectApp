@@ -1,5 +1,6 @@
 package com.emailProcessor.emailProcessor.controller;
-import com.emailProcessor.basedomains.dto.*;
+import com.emailProcessor.basedomains.dto.CustomResponse;
+import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
 import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.KeywordRepository;
@@ -11,15 +12,12 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * REST controller for managing {@link com.emailProcessor.emailProcessor.entity.Keyword}.

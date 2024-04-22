@@ -1,0 +1,12 @@
+
+š	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(‘ó‡ûıÿÿÿÿJ$a255af37-7bb0-40fd-a731-0acb21bf19d5
+
+java:S3655Z"LCall "result.isPresent()" or "!result.isEmpty()" before accessing the value.(Æ°¢¼ùÿÿÿÿJ$7fedaa42-48cb-4133-872f-480fbcb38367
+~
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄŞJ$05423bb1-2c11-48ca-9dc0-ee516330c52e
+f	java:S106"+Replace this use of System.out by a logger.(áÃÃJ$a52f198a-ca96-4a75-a480-882fddbee01f
+f	java:S106&"+Replace this use of System.out by a logger.(áÃÃJ$cad63679-b3cf-4433-8df7-9180f401f033
+f	java:S106-"+Replace this use of System.out by a logger.(áÃÃJ$e386cc2c-6f99-4927-a538-b1cb03e0caf9
+f	java:S1064"+Replace this use of System.out by a logger.(áÃÃJ$09b33209-4ff8-4379-8c1e-bf2f9d95f1db
+f	java:S106M"+Replace this use of System.out by a logger.(·ÁğJ$d5817a7f-8e3d-47cf-9452-79a745f4cdc4
+f	java:S106`"+Replace this use of System.out by a logger.(ÑİØ½J$f2750261-6e59-41dd-b095-23a72e0f160e

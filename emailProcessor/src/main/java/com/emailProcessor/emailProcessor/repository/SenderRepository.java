@@ -2,12 +2,15 @@ package com.emailProcessor.emailProcessor.repository;
 
 import com.emailProcessor.emailProcessor.entity.Sender;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 /**
- * MongoRepositoryfor the Sender entity.
+ * Mongo Repository for the Sender entity.
  */
 
 @Repository
-public interface SenderRepository extends MongoRepository<Sender, String> {}
+public interface SenderRepository extends MongoRepository<Sender, String> {
+    Optional<Sender> findSenderBySenderEmail(String email);
+}

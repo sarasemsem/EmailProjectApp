@@ -1,6 +1,5 @@
 package com.emailProcessor.emailProcessor.entity;
 import com.emailProcessor.basedomains.enumeration.Language;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mongodb.lang.NonNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,9 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
-import org.springframework.data.redis.core.RedisHash;
-
-import java.io.Serializable;
 
 /**
  * A TranslatedKeyword.

@@ -1,6 +1,9 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
-import com.emailProcessor.basedomains.dto.*;
+import com.emailProcessor.basedomains.dto.CategoryDto;
+import com.emailProcessor.basedomains.dto.KeywordDto;
+import com.emailProcessor.basedomains.dto.TranslatedKeywordDto;
+import com.emailProcessor.basedomains.dto.WorkerDto;
 import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.repository.KeywordRepository;
@@ -16,7 +19,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,47 +46,52 @@ public class KeywordServiceImpl implements KeywordService {
     @CacheEvict(value = "keyword", allEntries = true )
     //@CachePut(value = "keyword", key = "'allKeywords'")
     public Keyword save(KeywordDto keywordDto) {
-        log.debug("Request to save Keyword : {}", keywordDto);
-        System.out.println("Request to save Keyword :"+keywordDto.toString());
+        try {
+            log.debug("Request to save Keyword : {}", keywordDto);
+            System.out.println("Request to save Keyword :" + keywordDto.toString());
 
-        Keyword toSaveResult = new Keyword();
-
+            Keyword toSaveResult = new Keyword();
             toSaveResult.setWord(keywordDto.getWord());
             toSaveResult.setWeight(keywordDto.getWeight());
 
-        if (keywordDto.getCreatedBy() != null) {
-            WorkerDto workerDto = keywordDto.getCreatedBy();
-            Worker worker = modelMapper.map(workerDto, Worker.class);
-            toSaveResult.setCreatedBy(worker);
-        }
-        if (keywordDto.getCategories() != null) {
-            List<CategoryDto> categoriesDtos = keywordDto.getCategories();
-            List<Category> categories = categoriesDtos.stream()
-                    .map(categoryDto -> modelMapper.map(categoryDto, Category.class))
-                    .toList();
-            toSaveResult.setCategories(categories);
-        }
-        if (keywordDto.getTranslatedKeywords() != null) {
-            List<TranslatedKeywordDto>  translatedKeywordDtos = keywordDto.getTranslatedKeywords();
-            List<TranslatedKeyword> translatedKeywords = translatedKeywordDtos.stream()
-                    .map(translatedKeyword -> modelMapper.map(translatedKeyword, TranslatedKeyword.class))
-                    .toList();
-            toSaveResult.setTranslatedKeywords(translatedKeywords);
-        }
+            if (keywordDto.getCreatedBy().getWorkerId() != null) {
+                WorkerDto workerDto = keywordDto.getCreatedBy();
+                Worker worker = modelMapper.map(workerDto, Worker.class);
+                toSaveResult.setCreatedBy(worker);
+            }
+            if (keywordDto.getCategories() != null) {
+                List<CategoryDto> categoriesDtos = keywordDto.getCategories();
+                List<Category> categories = categoriesDtos.stream()
+                        .map(categoryDto -> modelMapper.map(categoryDto, Category.class))
+                        .toList();
+                toSaveResult.setCategories(categories);
+            }
+            if (keywordDto.getTranslatedKeywords() != null) {
+                List<TranslatedKeywordDto> translatedKeywordDtos = keywordDto.getTranslatedKeywords();
+                List<TranslatedKeyword> translatedKeywords = translatedKeywordDtos.stream()
+                        .map(translatedKeyword -> modelMapper.map(translatedKeyword, TranslatedKeyword.class))
+                        .toList();
+                toSaveResult.setTranslatedKeywords(translatedKeywords);
+            }
 
-        // Save the Keyword entity
-        Keyword savedKeyword = keywordRepository.save(toSaveResult);
+            // Save the Keyword entity
+            Keyword savedKeyword = keywordRepository.save(toSaveResult);
 
-        // Update each Category document to include the newly created keyword
-        for (CategoryDto category : keywordDto.getCategories()) {
-            mongoTemplate.update(Category.class)
-                    .matching(Criteria.where("categoryId").is(category.getCategoryId()))
-                    .apply(new Update().push("keywords").value(savedKeyword.getKeywordId()))
-                    .first();
+            // Update each Category document to include the newly created keyword
+            for (CategoryDto category : keywordDto.getCategories()) {
+                mongoTemplate.update(Category.class)
+                        .matching(Criteria.where("categoryId").is(category.getCategoryId()))
+                        .apply(new Update().push("keywords").value(savedKeyword.getKeywordId()))
+                        .first();
+            }
+            updateCachedList(modelMapper.map(savedKeyword, KeywordDto.class));
+            return savedKeyword;
+        } catch (Exception e) {
+            log.error("Error occurred while saving Keyword: {}", e.getMessage());
+            throw new RuntimeException("Error occurred while saving Keyword", e);
         }
-        updateCachedList(modelMapper.map(savedKeyword, KeywordDto.class));
-        return savedKeyword;
     }
+
 
 
     @Override

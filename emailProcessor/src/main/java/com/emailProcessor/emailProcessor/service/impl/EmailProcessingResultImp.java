@@ -1,13 +1,8 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.EmailProcessingResultDto;
-import com.emailProcessor.basedomains.dto.KeywordDto;
-import com.emailProcessor.emailProcessor.entity.Category;
-import com.emailProcessor.emailProcessor.entity.Email;
 import com.emailProcessor.emailProcessor.entity.EmailProcessingResult;
-import com.emailProcessor.emailProcessor.entity.Keyword;
 import com.emailProcessor.emailProcessor.repository.EmailProcessingResultRepository;
-import com.emailProcessor.emailProcessor.repository.KeywordRepository;
 import com.emailProcessor.emailProcessor.service.EmailProcessingResultService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
