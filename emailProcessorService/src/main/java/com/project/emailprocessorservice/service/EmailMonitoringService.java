@@ -70,8 +70,8 @@ public class EmailMonitoringService extends MessageCountAdapter implements Appli
                                 EmailDto emailDto = emailProcessingService.processMessage(message);
                                 // Produce the email to the Kafka topic
                                 EmailEvent emailEvent = new EmailEvent();
-                                emailEvent.setStatus("PENDING");
-                                emailEvent.setMessage("email satus is in pending");
+                                emailEvent.setStatus("NEW");
+                                emailEvent.setMessage("new email coming-in");
                                 emailEvent.setEmail(emailDto);
                                 emailProducer.sendMessage(emailEvent);
                                 System.out.println("Email sent to Kafka: " + emailDto.getSubject());

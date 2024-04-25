@@ -22,7 +22,7 @@ public class EmailConsumer {
             , groupId = "${spring.kafka.consumer.group-id}"
     )
     public void consume(EmailEvent event){
-    LOGGER.info(String.format("Email event recieved in processor service => %s", event.toString()));
+    LOGGER.info(String.format("Email event received in processor service => %s", event.toString()));
         //save the email into the database
         consumeEmail(event.getEmail());
         try {

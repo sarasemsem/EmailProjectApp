@@ -54,7 +54,9 @@ public class NLPService {
                 if (word.matches("[a-zA-Z0-9]{2,}")) {
                     Optional<KeywordDto> keyword = keywordService.findKeywordByWord(word);
                     keyword.ifPresent(k -> {
-                        foundKeywords.add(k);
+                        if (!foundKeywords.contains(k)) {
+                            foundKeywords.add(k);
+                        }
                         if (k.getCategories() != null) {
                             for (CategoryDto category : k.getCategories()) {
                                 double weight = k.getWeight();
