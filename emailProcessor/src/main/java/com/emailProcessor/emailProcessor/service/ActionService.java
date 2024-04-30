@@ -8,11 +8,10 @@ import java.util.List;
 import java.util.Optional;
 @Service
 public interface ActionService {
-    ResponseEntity<String>  saveAction(Action action);
+    Action saveAction(Action action);
     ActionDto updateAction(Action action);
     Optional<Action> partialUpdateAction(Action action);
     List<Action> findAllActions();
-    List<Action> findAllActionsWhereLinkedCategoryIsNull();
     Optional<ActionDto> findOneAction(String id);
     void deleteAction(String id);
 }

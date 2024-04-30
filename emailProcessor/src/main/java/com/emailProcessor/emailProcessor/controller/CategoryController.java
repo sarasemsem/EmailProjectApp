@@ -180,7 +180,7 @@ public class CategoryController {
         clearCache();
         categoryService.deleteCategory(id);
         clearCache();
-        return ResponseEntity.status(HttpStatus.OK).body("deleted Category");
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @GetMapping("/clear_cache")

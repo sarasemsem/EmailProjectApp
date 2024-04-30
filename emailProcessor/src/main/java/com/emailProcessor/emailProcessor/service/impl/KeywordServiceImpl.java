@@ -43,8 +43,6 @@ public class KeywordServiceImpl implements KeywordService {
     private final ModelMapper modelMapper;
 
     @Override
-    @CacheEvict(value = "keyword", allEntries = true )
-    //@CachePut(value = "keyword", key = "'allKeywords'")
     public Keyword save(KeywordDto keywordDto) {
         try {
             log.debug("Request to save Keyword : {}", keywordDto);
@@ -95,26 +93,20 @@ public class KeywordServiceImpl implements KeywordService {
 
 
     @Override
-    @CachePut(value = "keyword", key = "'allKeywords'")
     public Keyword update(Keyword keyword) {
         log.debug("Request to update Keyword : {}", keyword);
         return keywordRepository.save(keyword);
     }
 
     @Override
-    @CachePut(value = "keyword", key = "'allKeywords'")
     public Optional<Keyword> partialUpdate(Keyword keyword) {
         log.debug("Request to partially update Keyword : {}", keyword);
 
         return keywordRepository
             .findById(keyword.getKeywordId())
             .map(existingKeyword -> {
-                if (keyword.getWord() != null) {
-                    existingKeyword.setWord(keyword.getWord());
-                }
-                if (keyword.getCreatedBy() != null) {
-                    existingKeyword.setCreatedBy(keyword.getCreatedBy());
-                }
+                existingKeyword.setWord(keyword.getWord());
+                existingKeyword.setCreatedBy(keyword.getCreatedBy());
 
                 return existingKeyword;
             })
@@ -122,11 +114,15 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    @Cacheable(value = "keyword", key = "'allKeywords'")
     public List<KeywordDto> findAllKeywords() {
         log.debug("Request to get all Keywords");
-        List<Keyword> keywords =  keywordRepository.findAll();
-        return convertToDto(keywords);
+        try {
+            List<Keyword> keywords = keywordRepository.findAll();
+            return convertToDto(keywords);
+        } catch (RuntimeException e) {
+            log.error("Error occurred while fetching all Keywords: {}", e.getMessage());
+            throw new RuntimeException("Failed to fetch all Keywords", e);
+        }
     }
 
     private List<KeywordDto> convertToDto(List<Keyword> keywords) {
@@ -184,6 +180,17 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
+    public Optional<List<Keyword>> KeywordsByCategory(String id) {
+        List<Keyword> keywords = keywordRepository.findKeywordsByCategories(id);
+        System.out.println("the keywords by category:"+keywords);
+        if (keywords != null) {
+            return Optional.of(keywords);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<KeywordDto> findKeywordByWord(String word) {
         Keyword keyword = keywordRepository.findKeywordByWord(word);
         if (keyword != null) {
@@ -194,34 +201,34 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    @CacheEvict(value = "keyword", allEntries = true )
     public Map<String, String> delete(String id) {
         log.debug("Request to delete Keyword : {}", id);
         Map<String, String> response = new HashMap<>();
+        try {
+            Optional<Keyword> keywordOptional = keywordRepository.findById(id);
+            if (keywordOptional.isPresent()) {
+                Keyword keyword = keywordOptional.get();
+                // Remove keyword ID from associated categories
+                for (Category category : keyword.getCategories()) {
+                    category.getKeywords().remove(id);
+                }
 
-        Optional<Keyword> keywordOptional = keywordRepository.findById(id);
-        if (keywordOptional.isPresent()) {
-            Keyword keyword = keywordOptional.get();
+                // Save the updated categories
+                categoryRepository.saveAll(keyword.getCategories());
 
-            // Remove keyword ID from associated categories
-            for (Category category : keyword.getCategories()) {
-                category.getKeywords().remove(id);
+                // Delete the keyword
+                keywordRepository.deleteById(id);
+
+                response.put("message", "Successful deletion");
+            } else {
+                response.put("message", "The resource was not found");
             }
-
-            // Save the updated categories
-            categoryRepository.saveAll(keyword.getCategories());
-            // Delete the keyword
-            clearCache();
-            keywordRepository.deleteById(id);
-            clearCache();
-
-            response.put("message", "Successful deletion");
-        } else {
-            response.put("message", "The resource was not found");
+        } catch (Exception e) {
+            log.error("Error occurred while deleting Keyword: {}", e.getMessage());
+            response.put("message", "Failed to delete the resource");
         }
         return response;
     }
-
 
     @CachePut(value = "keyword", key = "'allKeywords'")
     private List<KeywordDto> updateCachedList(KeywordDto keywordDto) {

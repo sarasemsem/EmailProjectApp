@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="MavenProjectsManager">
@@ -11,7 +12,7 @@
   </component>
   <component name="NullableNotNullManager">
     <option name="myDefaultNullable" value="org.jetbrains.annotations.Nullable" />
-    <option name="myDefaultNotNull" value="com.mongodb.lang.NonNull" />
+    <option name="myDefaultNotNull" value="lombok.NonNull" />
     <option name="myNullables">
       <value>
         <list size="14">

@@ -48,14 +48,13 @@ public interface KeywordService {
      * @return the entity.
      */
     Optional<Keyword> findOne(String id);
-
+    Optional<List<Keyword>> KeywordsByCategory(String id);
     Optional<KeywordDto> findKeywordByWord(String word);
 
     /**
      * Delete the "id" keyword.
      *
      * @param id the id of the entity.
-     * @return
      */
     Map<String, String> delete(String id);
 

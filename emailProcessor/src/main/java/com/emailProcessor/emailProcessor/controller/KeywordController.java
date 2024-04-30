@@ -73,7 +73,7 @@ public class KeywordController {
     }
 
     @PatchMapping(value = "/{keywordId}", consumes = { "application/json", "application/merge-patch+json" })
-    public ResponseEntity<Optional<Keyword>> partialUpdateKeyword(
+    public ResponseEntity<Keyword> partialUpdateKeyword(
         @PathVariable(value = "keywordId", required = false) final String keywordId,
         @NotNull @RequestBody Keyword keyword
     ) throws URISyntaxException {
@@ -90,8 +90,7 @@ public class KeywordController {
         }
 
         Optional<Keyword> result = keywordService.partialUpdate(keyword);
-
-        return ResponseEntity.ok(Optional.of(result.get()));
+        return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("")
@@ -109,10 +108,20 @@ public class KeywordController {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the keyword, or with status {@code 404 (Not Found)}.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Keyword>> getKeyword(@PathVariable("id") String id) {
+    public ResponseEntity<Keyword> getKeyword(@PathVariable("id") String id) {
         log.debug("REST request to get Keyword : {}", id);
         Optional<Keyword> keyword = keywordService.findOne(id);
-        return ResponseEntity.ok(Optional.of(keyword.get()));
+        if (keyword.isPresent()) {
+            return ResponseEntity.ok(keyword.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    @GetMapping("keywordsByCategory/{id}")
+    public ResponseEntity<Optional<List<Keyword>>> getKeywordsByCategory(@PathVariable("id") String id) {
+        log.debug("REST request to get Keyword : {}", id);
+        Optional<List<Keyword>> keyword = keywordService.KeywordsByCategory(id);
+        return keyword.map(keywords -> ResponseEntity.ok(Optional.of(keywords))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

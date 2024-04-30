@@ -112,7 +112,7 @@ public class NLPService {
                 emailProcessingResult.setProposedCategories(proposedCategories);
                 emailProcessingResult.setSelectedCategories(selectedCategories);
                 emailProcessingResult.setFoundKeywords(foundKeywords);
-                emailProcessingResult.setScore(score);
+                emailProcessingResult.setScore(score/100);
 
                 // Save the EmailProcessingResult to MongoDB
                 EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);

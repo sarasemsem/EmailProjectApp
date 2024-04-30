@@ -1,4 +1,5 @@
 package com.emailProcessor.emailProcessor.entity;
+import com.mongodb.lang.NonNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,14 +23,15 @@ public class Action implements Serializable {
 
     @MongoId
     private String actionId;
-    private String type;
+    @NonNull
+    private String action;
     private String descriptionAct;
     private Instant actionDate;
     private Instant updatedAt;
-    private Boolean affected;
-    private Integer treatedBy;
     @DBRef
-    private LinkedCategory linkedCategory;
+    private Worker updatedBy;
+    private Boolean affected;
+    private Boolean state;
 
         @Override
     public boolean equals(Object o) {
@@ -52,12 +54,12 @@ public class Action implements Serializable {
     public String toString() {
         return "Action{" +
             "actionId=" + getActionId() +
-            ", type='" + getType() + "'" +
+            ", type='" + getAction() + "'" +
             ", descriptionAct='" + getDescriptionAct() + "'" +
             ", actionDate='" + getActionDate() + "'" +
             ", updatedAt='" + getUpdatedAt() + "'" +
             ", affected='" + getAffected() + "'" +
-            ", treatedBy=" + getTreatedBy() +
+            ", treatedBy=" + getUpdatedBy() +
             "}";
     }
 }

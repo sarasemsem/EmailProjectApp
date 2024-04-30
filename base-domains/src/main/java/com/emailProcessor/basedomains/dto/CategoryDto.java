@@ -21,6 +21,7 @@ public class CategoryDto implements Serializable {
     private String title;
     private String description;
     private List<String> keywords ;
+    private ActionDto linkedAction;
 
     public CategoryDto(String categoryId) {
         this.categoryId = categoryId;

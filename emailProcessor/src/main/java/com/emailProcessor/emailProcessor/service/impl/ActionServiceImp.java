@@ -23,14 +23,9 @@ public class ActionServiceImp implements ActionService {
     private final ModelMapper modelMapper;
     private final ActionRepository actionRepository;
     @Override
-    public ResponseEntity<String> saveAction(Action action) {
+    public Action saveAction(Action action) {
         log.debug("Request to save Action : {}", action);
-        Action savedAction= actionRepository.save(action);
-        if (savedAction.getActionId() != null) {
-            return ResponseEntity.status(HttpStatus.CREATED).body("Sender saved successfully");
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to insert the Sender");
-        }
+        return actionRepository.save(action);
     }
 
     @Override
@@ -46,8 +41,8 @@ public class ActionServiceImp implements ActionService {
         return actionRepository
                 .findById(action.getActionId())
                 .map(existingAction -> {
-                    if (action.getType() != null) {
-                        existingAction.setType(action.getType());
+                    if (action.getAction() != null) {
+                        existingAction.setAction(action.getAction());
                     }
                     if (action.getDescriptionAct() != null) {
                         existingAction.setDescriptionAct(action.getDescriptionAct());
@@ -61,8 +56,11 @@ public class ActionServiceImp implements ActionService {
                     if (action.getAffected() != null) {
                         existingAction.setAffected(action.getAffected());
                     }
-                    if (action.getTreatedBy() != null) {
-                        existingAction.setTreatedBy(action.getTreatedBy());
+                    if (action.getUpdatedBy() != null) {
+                        existingAction.setUpdatedBy(action.getUpdatedBy());
+                    }
+                    if (action.getState() != null) {
+                        existingAction.setState(action.getState());
                     }
 
                     return existingAction;
@@ -74,15 +72,6 @@ public class ActionServiceImp implements ActionService {
     public List<Action> findAllActions() {
         log.debug("Request to get all Actions");
         return actionRepository.findAll();
-    }
-
-    @Override
-    public List<Action> findAllActionsWhereLinkedCategoryIsNull() {
-        log.debug("Request to get all actions where LinkedCategory is null");
-        return StreamSupport
-                .stream(actionRepository.findAll().spliterator(), false)
-                .filter(action -> action.getLinkedCategory() == null)
-                .toList();
     }
 
     @Override

@@ -20,7 +20,11 @@ public class EmailProcessingService {
     public EmailDto processMessage(Message message) throws MessagingException, IOException {
         System.out.println("Im in the processMessage()");
         EmailDto emailDto = new EmailDto();
-        emailDto.setSubject(message.getSubject());
+        String subject;
+        if (message.getSubject().isEmpty()) {
+            subject="No subject";
+        } else subject = message.getSubject();
+        emailDto.setSubject(subject);
         emailDto.setTreated(false);
         emailDto.setSender(emailExtractor(message.getFrom()[0].toString()));
         if (message.getReceivedDate() != null) {
