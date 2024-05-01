@@ -8,7 +8,7 @@ import java.util.Optional;
 @Service
 public interface CategoryService {
 
-    CategoryDto saveCategory(Category category);
+    CategoryDto saveCategory(CategoryDto categoryDto);
 
     CategoryDto updateCategory(Category category);
 

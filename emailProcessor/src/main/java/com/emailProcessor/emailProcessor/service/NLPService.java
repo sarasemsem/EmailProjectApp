@@ -1,9 +1,6 @@
 package com.emailProcessor.emailProcessor.service;
 
-import com.emailProcessor.basedomains.dto.CategoryDto;
-import com.emailProcessor.basedomains.dto.EmailDto;
-import com.emailProcessor.basedomains.dto.EmailProcessingResultDto;
-import com.emailProcessor.basedomains.dto.KeywordDto;
+import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.configuration.Pipeline;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
@@ -114,6 +111,10 @@ public class NLPService {
                 emailProcessingResult.setFoundKeywords(foundKeywords);
                 emailProcessingResult.setScore(score/100);
 
+                List<ActionDto> actions = selectedCategories.stream()
+                        .map(CategoryDto::getLinkedAction) // Retrieve linked ActionDto for each CategoryDto
+                        .collect(Collectors.toList());
+                emailProcessingResult.setAction(actions);
                 // Save the EmailProcessingResult to MongoDB
                 EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
 

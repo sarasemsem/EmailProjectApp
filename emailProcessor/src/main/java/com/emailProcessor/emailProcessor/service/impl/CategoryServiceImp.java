@@ -21,8 +21,9 @@ public class CategoryServiceImp implements CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public CategoryDto saveCategory(Category category) {
-        log.debug("Request to save Category : {}", category);
+    public CategoryDto saveCategory(CategoryDto categoryDto) {
+        log.debug("Request to save Category : {}", categoryDto);
+        Category category = modelMapper.map(categoryDto, Category.class);
         Category savedCategory =categoryRepository.save(category);
         return modelMapper.map(savedCategory, CategoryDto.class);
     }

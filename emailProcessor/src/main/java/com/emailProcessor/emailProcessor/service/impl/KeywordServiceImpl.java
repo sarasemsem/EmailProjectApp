@@ -22,10 +22,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -118,12 +115,17 @@ public class KeywordServiceImpl implements KeywordService {
         log.debug("Request to get all Keywords");
         try {
             List<Keyword> keywords = keywordRepository.findAll();
-            return convertToDto(keywords);
+            if (keywords != null) {
+                return convertToDto(keywords);
+            } else {
+                return Collections.emptyList(); // or handle null case as per your requirement
+            }
         } catch (RuntimeException e) {
             log.error("Error occurred while fetching all Keywords: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch all Keywords", e);
         }
     }
+
 
     private List<KeywordDto> convertToDto(List<Keyword> keywords) {
         return keywords.stream()

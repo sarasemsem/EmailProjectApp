@@ -46,19 +46,19 @@ public class CategoryController {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PostMapping("")
-    public ResponseEntity<CustomResponse> createCategory(@Validated @RequestBody Category category) throws Exception {
-        log.debug("REST request to save Category : {}", category);
-        if (category.getCategoryId() != null) {
+    public ResponseEntity<CustomResponse> createCategory(@Validated @RequestBody CategoryDto categoryDto) throws Exception {
+        log.debug("REST request to save Category : {}", categoryDto);
+        if (categoryDto.getCategoryId() != null) {
             throw new Exception("A new category cannot already have an ID");
         }
         try {
-            CategoryDto result = categoryService.saveCategory(category);
+            CategoryDto result = categoryService.saveCategory(categoryDto);
             CustomResponse customResponse = new CustomResponse(result, HttpStatus.CREATED.value(), "category saved successfully");
             clearCache();
             return ResponseEntity.status(HttpStatus.CREATED).body(customResponse);
         }catch (Exception e) {
             log.error("Error saving category", e);
-            CustomResponse customResponse = new CustomResponse(category, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving category");
+            CustomResponse customResponse = new CustomResponse(categoryDto, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving category");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(customResponse);
         }
     }

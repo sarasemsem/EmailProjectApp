@@ -26,4 +26,6 @@ public class EmailProcessingResult implements Serializable  {
     @DBRef
     private List<Keyword> foundKeywords;
     private Double score ;
+    @DBRef
+    private List<Action> action;
 }

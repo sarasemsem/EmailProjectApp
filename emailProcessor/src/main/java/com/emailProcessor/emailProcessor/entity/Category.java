@@ -26,7 +26,6 @@ public class Category implements Serializable {
     private String title;
     private String description;
     private List<String> keywords ;
-
     @DBRef
     private Action linkedAction;
 
