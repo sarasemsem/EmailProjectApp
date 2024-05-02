@@ -13,9 +13,7 @@ import lombok.*;
 public class TranslatedKeywordDto {
 
 
-    @NonNull
     private String tkeywordId;
-    @NonNull
     private String wordTranslated;
     private Language language;
 

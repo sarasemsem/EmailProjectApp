@@ -19,6 +19,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,7 +81,7 @@ public class KeywordServiceImpl implements KeywordService {
                         .apply(new Update().push("keywords").value(savedKeyword.getKeywordId()))
                         .first();
             }
-            updateCachedList(modelMapper.map(savedKeyword, KeywordDto.class));
+            //updateCachedList(modelMapper.map(savedKeyword, KeywordDto.class));
             return savedKeyword;
         } catch (Exception e) {
             log.error("Error occurred while saving Keyword: {}", e.getMessage());
@@ -115,7 +117,7 @@ public class KeywordServiceImpl implements KeywordService {
         log.debug("Request to get all Keywords");
         try {
             List<Keyword> keywords = keywordRepository.findAll();
-            if (keywords != null) {
+            if (!keywords.isEmpty()) {
                 return convertToDto(keywords);
             } else {
                 return Collections.emptyList(); // or handle null case as per your requirement
@@ -156,12 +158,13 @@ public class KeywordServiceImpl implements KeywordService {
             // Map other fields similarly
 
             dto.setCreatedBy(createdByDto);
-            dto.setWeight(keyword.getWeight());
         }
+        dto.setWeight(keyword.getWeight());
+
         // Null check before mapping categories to CategoryDto
         if (keyword.getCategories() != null) {
             List<CategoryDto> categoryDtoList = keyword.getCategories().stream()
-                    .map(category -> modelMapper.map(category, CategoryDto.class))
+                    .map(category -> category != null ? modelMapper.map(category, CategoryDto.class) : null)
                     .collect(Collectors.toList());
             dto.setCategories(categoryDtoList);
         }
@@ -203,9 +206,8 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    public Map<String, String> delete(String id) {
+    public ResponseEntity<String> delete(String id) {
         log.debug("Request to delete Keyword : {}", id);
-        Map<String, String> response = new HashMap<>();
         try {
             Optional<Keyword> keywordOptional = keywordRepository.findById(id);
             if (keywordOptional.isPresent()) {
@@ -219,17 +221,16 @@ public class KeywordServiceImpl implements KeywordService {
                 categoryRepository.saveAll(keyword.getCategories());
 
                 // Delete the keyword
-                keywordRepository.deleteById(id);
+               keywordRepository.deleteById(id);
 
-                response.put("message", "Successful deletion");
+                return ResponseEntity.noContent().build(); // 204 No Content
             } else {
-                response.put("message", "The resource was not found");
+                return ResponseEntity.notFound().build(); // 404 Not Found
             }
         } catch (Exception e) {
             log.error("Error occurred while deleting Keyword: {}", e.getMessage());
-            response.put("message", "Failed to delete the resource");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete the resource"); // 500 Internal Server Error
         }
-        return response;
     }
 
     @CachePut(value = "keyword", key = "'allKeywords'")

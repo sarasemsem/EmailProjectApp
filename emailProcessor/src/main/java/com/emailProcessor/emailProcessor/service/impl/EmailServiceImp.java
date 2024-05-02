@@ -59,6 +59,10 @@ public class EmailServiceImp implements EmailService {
         dto.setDate(email.getDate());
         dto.setTreated(email.getTreated());
         dto.setUrgent(email.getUrgent());
+        dto.setImportant(email.getImportant());
+        dto.setDraft(email.getDraft());
+        dto.setSpam(email.getSpam());
+        dto.setArchived(email.getArchived());
 
         // Null check before mapping EmailProcessingResult to EmailProcessingResultDto
         if (email.getResult() != null) {
@@ -129,6 +133,21 @@ public class EmailServiceImp implements EmailService {
                     if (emailDto.getTreated() != null) {
                         existingEmail.setTreated(emailDto.getTreated());
                     }
+                    if (emailDto.getUrgent() != null) {
+                        existingEmail.setUrgent(emailDto.getUrgent());
+                    }
+                    if (emailDto.getImportant() != null) {
+                        existingEmail.setImportant(emailDto.getImportant());
+                    }
+                    if (emailDto.getDraft() != null) {
+                        existingEmail.setDraft(emailDto.getDraft());
+                    }
+                    if (emailDto.getSpam() != null) {
+                        existingEmail.setSpam(emailDto.getSpam());
+                    }
+                    if (emailDto.getArchived() != null) {
+                        existingEmail.setArchived(emailDto.getArchived());
+                    }
                     // Save the email in the repository
                     Email savedEmail = emailRepository.save(existingEmail);
 
@@ -172,6 +191,12 @@ public class EmailServiceImp implements EmailService {
         existingEmail.setContent(emailDto.getContent());
         existingEmail.setSender(emailDto.getSender());
         existingEmail.setIsRead(emailDto.getIsRead());
+        existingEmail.setTreated(emailDto.getTreated());
+        existingEmail.setUrgent(emailDto.getUrgent());
+        existingEmail.setImportant(emailDto.getImportant());
+        existingEmail.setDraft(emailDto.getDraft());
+        existingEmail.setSpam(emailDto.getSpam());
+        existingEmail.setArchived(emailDto.getArchived());
         Email updatedEmail = emailRepository.save(existingEmail);
         updateCachedEmailList(emailDto);
         return modelMapper.map(updatedEmail, EmailDto.class);

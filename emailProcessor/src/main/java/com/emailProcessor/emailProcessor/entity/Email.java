@@ -34,6 +34,14 @@ public class Email implements Serializable {
     @Indexed
     private Boolean urgent = false;
     @Indexed
+    private Boolean important = false;
+    @Indexed
+    private Boolean draft = false;
+    @Indexed
+    private Boolean spam = false;
+    @Indexed
+    private Boolean archived = false;
+    @Indexed
     private Instant date;
     @Indexed(sparse = true)
     @DBRef

@@ -111,11 +111,7 @@ public class KeywordController {
     public ResponseEntity<Keyword> getKeyword(@PathVariable("id") String id) {
         log.debug("REST request to get Keyword : {}", id);
         Optional<Keyword> keyword = keywordService.findOne(id);
-        if (keyword.isPresent()) {
-            return ResponseEntity.ok(keyword.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return keyword.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     @GetMapping("keywordsByCategory/{id}")
     public ResponseEntity<Optional<List<Keyword>>> getKeywordsByCategory(@PathVariable("id") String id) {
@@ -133,8 +129,9 @@ public class KeywordController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteKeyword(@PathVariable("id") String id) {
         log.debug("REST request to delete Keyword : {}", id);
-        keywordService.delete(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        // Attempt to delete the keyword
+        log.debug("REST request to delete Keyword : {}", id);
+        return keywordService.delete(id);
     }
 
     @GetMapping("/clear_cache")

@@ -1,6 +1,7 @@
 package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.entity.Keyword;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,6 @@ public interface KeywordService {
      *
      * @param id the id of the entity.
      */
-    Map<String, String> delete(String id);
+    ResponseEntity<String> delete(String id);
 
 }
