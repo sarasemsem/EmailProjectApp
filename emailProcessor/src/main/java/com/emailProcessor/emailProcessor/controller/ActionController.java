@@ -64,7 +64,7 @@ public class ActionController {
             // Update each category with the newly saved action
             for (CategoryDto categoryDto : actionDto.getCategories()) {
                 Category category = modelMapper.map(categoryDto, Category.class);
-                category.setLinkedAction(result);
+                category.setAction(result);
                 categoryService.partialUpdateCategory(category);
             }
 

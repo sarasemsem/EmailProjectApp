@@ -24,6 +24,7 @@ public class ActionDto implements Serializable {
     private WorkerDto updatedBy;
     private Boolean affected;
     private Boolean state;
+    private RelatedDataDto relatedData;
     private List<CategoryDto> categories;
         @Override
     public boolean equals(Object o) {

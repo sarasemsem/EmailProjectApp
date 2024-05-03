@@ -19,14 +19,16 @@ public class EmailDto implements Serializable {
     private String subject;
     private String originalContent;
     private String content;
+    private Instant date;
     private Boolean isRead = false;
+    private Boolean treated = false;
     private Boolean urgent = false;
     private Boolean important = false;
     private Boolean draft = false;
     private Boolean spam = false;
     private Boolean archived = false;
-    private Instant date;
-    private EmailProcessingResultDto result;
-    private Boolean treated = false;
     private SenderDto contact;
+    private EmailProcessingResultDto result;
+    private RelatedDataDto relatedData;
+    private ActionDto relatedAction;
 }

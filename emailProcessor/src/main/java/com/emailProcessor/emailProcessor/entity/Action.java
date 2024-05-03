@@ -32,6 +32,8 @@ public class Action implements Serializable {
     private Worker updatedBy;
     private Boolean affected;
     private Boolean state;
+    @DBRef
+    private RelatedData relatedData;
 
         @Override
     public boolean equals(Object o) {

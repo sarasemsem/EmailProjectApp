@@ -1,11 +1,10 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.*;
-import com.emailProcessor.emailProcessor.entity.Email;
-import com.emailProcessor.emailProcessor.entity.EmailProcessingResult;
-import com.emailProcessor.emailProcessor.entity.Sender;
+import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.EmailProcessingResultRepository;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
+import com.emailProcessor.emailProcessor.repository.RelatedDataRepository;
 import com.emailProcessor.emailProcessor.service.EmailService;
 import com.emailProcessor.emailProcessor.service.SenderService;
 import lombok.AllArgsConstructor;
@@ -19,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,8 +31,9 @@ public class EmailServiceImp implements EmailService {
     private SenderService senderService;
 
     private final ModelMapper modelMapper;
-    private final Logger log = LoggerFactory.getLogger(EmailServiceImp.class);
+    private static final Logger logger = LoggerFactory.getLogger(EmailServiceImp.class);
     private final EmailProcessingResultRepository emailProcessingResultRepository;
+    private final RelatedDataRepository relatedDataRepository;
     //@Cacheable(value = "emails", key = "'allEmails'")
     @Override
     public List<EmailDto> getAllEmails() {
@@ -41,7 +43,7 @@ public class EmailServiceImp implements EmailService {
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("Error occurred while retrieving emails: {}", e.getMessage());
+            logger.error("Error occurred while retrieving emails: {}", e.getMessage());
             return Collections.emptyList(); // Return an empty list if an error occurs
         }
     }
@@ -90,7 +92,7 @@ public class EmailServiceImp implements EmailService {
     }
 
     @Override
-    public EmailDto getEmailById(String id) {
+    public EmailDto getEmailById(String id) throws InterruptedException {
         Email user = emailRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Email not found with id: " + id));
         return modelMapper.map(user, EmailDto.class);
@@ -107,7 +109,7 @@ public class EmailServiceImp implements EmailService {
 
     @Override
     public Optional<Email> partialUpdate(EmailDto emailDto) {
-        log.debug("Request to partially update Email : {}", emailDto);
+        logger.debug("Request to partially update Email : {}", emailDto);
         System.out.println("emails : " + emailDto);
 
         return emailRepository
@@ -122,6 +124,9 @@ public class EmailServiceImp implements EmailService {
                     if (emailDto.getContent() != null) {
                         existingEmail.setContent(emailDto.getContent());
                     }
+                    if (emailDto.getOriginalContent() != null) {
+                        existingEmail.setOriginalContent(emailDto.getOriginalContent());
+                    }
                     if (emailDto.getDate() != null) {
                         existingEmail.setDate(emailDto.getDate());
                     }
@@ -129,6 +134,9 @@ public class EmailServiceImp implements EmailService {
                         EmailProcessingResultDto resultDto = emailDto.getResult();
                         EmailProcessingResult result = modelMapper.map(resultDto, EmailProcessingResult.class);
                         existingEmail.setResult(result);
+                    }
+                    if (emailDto.getIsRead() != null) {
+                        existingEmail.setIsRead(emailDto.getIsRead());
                     }
                     if (emailDto.getTreated() != null) {
                         existingEmail.setTreated(emailDto.getTreated());
@@ -147,6 +155,21 @@ public class EmailServiceImp implements EmailService {
                     }
                     if (emailDto.getArchived() != null) {
                         existingEmail.setArchived(emailDto.getArchived());
+                    }
+                    if (emailDto.getRelatedData() != null) {
+                        RelatedDataDto relatedDataDto = emailDto.getRelatedData();
+                        RelatedData data = modelMapper.map(relatedDataDto, RelatedData.class);
+                        existingEmail.setRelatedData(data);
+                    }
+                    if (emailDto.getContact() != null) {
+                        SenderDto senderDto = emailDto.getContact();
+                        Sender sender = modelMapper.map(senderDto, Sender.class);
+                        existingEmail.setContact(sender);
+                    }
+                    if (emailDto.getRelatedAction() != null) {
+                        ActionDto actionDto = emailDto.getRelatedAction();
+                        Action action = modelMapper.map(actionDto, Action.class);
+                        existingEmail.setRelatedAction(action);
                     }
                     // Save the email in the repository
                     Email savedEmail = emailRepository.save(existingEmail);
@@ -237,6 +260,11 @@ public class EmailServiceImp implements EmailService {
             if (result != null) {
                 // Delete the associated EmailProcessingResult
                 emailProcessingResultRepository.delete(result);
+            }
+
+            RelatedData relatedData = email.getRelatedData();
+            if (relatedData != null) {
+                relatedDataRepository.delete(relatedData);
             }
 
             // Delete the email

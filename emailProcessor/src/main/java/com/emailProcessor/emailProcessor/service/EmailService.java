@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 public interface EmailService {
     List<EmailDto> getAllEmails();
     List<EmailDto> getUrgentEmails();
-    EmailDto getEmailById(String id);
+    EmailDto getEmailById(String id) throws InterruptedException;
     Email createEmail(EmailDto emailDto);
     Optional<Email> partialUpdate(EmailDto email);
     List<EmailDto> getAllUntreatedEmails();

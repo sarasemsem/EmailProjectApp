@@ -50,8 +50,8 @@ public class CategoryServiceImp implements CategoryService {
                     if (category.getDescription() != null) {
                         existingCategory.setDescription(category.getDescription());
                     }
-                    if (category.getLinkedAction() != null) {
-                        existingCategory.setLinkedAction(category.getLinkedAction());
+                    if (category.getAction() != null) {
+                        existingCategory.setAction(category.getAction());
                     }
 
                     return existingCategory;

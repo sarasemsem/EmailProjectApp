@@ -54,7 +54,7 @@ public class EmailController {
     }
 
     @GetMapping("/{emailId}")
-    public EmailDto getEmailDetails(@PathVariable Map<String,String> payload) {
+    public EmailDto getEmailDetails(@PathVariable Map<String,String> payload) throws InterruptedException {
         return emailService.getEmailById(payload.get("emailId"));
     }
     @PostMapping

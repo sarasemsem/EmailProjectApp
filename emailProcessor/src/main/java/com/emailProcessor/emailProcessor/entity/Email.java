@@ -50,4 +50,8 @@ public class Email implements Serializable {
     private Boolean treated = false;
     @DBRef
     private Sender contact;
+    @DBRef
+    private RelatedData relatedData;
+    @DBRef
+    private Action relatedAction;
 }
