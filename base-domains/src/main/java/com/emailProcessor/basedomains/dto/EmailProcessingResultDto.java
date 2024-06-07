@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -17,5 +18,6 @@ public class EmailProcessingResultDto implements Serializable {
     private List<CategoryDto> selectedCategories;
     private List<KeywordDto> foundKeywords;
     private Double score ;
-    private List<ActionDto> action;
+    //private List<ActionDto> action;
+    private List<ActionParamDto> relatedActions;
 }

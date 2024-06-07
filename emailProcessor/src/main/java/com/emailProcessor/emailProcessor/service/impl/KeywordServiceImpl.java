@@ -37,6 +37,8 @@ public class KeywordServiceImpl implements KeywordService {
     private final Logger log = LoggerFactory.getLogger(KeywordServiceImpl.class);
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private ModelMapper customModelMapper;
     private final KeywordRepository keywordRepository;
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
@@ -142,19 +144,7 @@ public class KeywordServiceImpl implements KeywordService {
         // Null check before mapping Worker to WorkerDto for createdBy
         // Check if createdBy is not null before mapping
         if (keyword.getCreatedBy() != null) {
-            WorkerDto createdByDto = new WorkerDto();
-            Worker createdBy = keyword.getCreatedBy();
-
-            // Map non-null fields of createdBy to WorkerDto
-            if (createdBy.getWorkerId() != null) {
-                createdByDto.setWorkerId(createdBy.getWorkerId());
-            }
-            if (createdBy.getFirstName() != null) {
-                createdByDto.setFirstName(createdBy.getFirstName());
-            }
-            if (createdBy.getLastName() != null) {
-                createdByDto.setLastName(createdBy.getLastName());
-            }
+            WorkerDto createdByDto = getWorkerDto(keyword);
             // Map other fields similarly
 
             dto.setCreatedBy(createdByDto);
@@ -164,7 +154,7 @@ public class KeywordServiceImpl implements KeywordService {
         // Null check before mapping categories to CategoryDto
         if (keyword.getCategories() != null) {
             List<CategoryDto> categoryDtoList = keyword.getCategories().stream()
-                    .map(category -> category != null ? modelMapper.map(category, CategoryDto.class) : null)
+                    .map(category -> category != null ? customModelMapper.map(category, CategoryDto.class) : null)
                     .collect(Collectors.toList());
             dto.setCategories(categoryDtoList);
         }
@@ -176,6 +166,23 @@ public class KeywordServiceImpl implements KeywordService {
             dto.setTranslatedKeywords(translatedKeywordDtoList);
         }
         return dto;
+    }
+
+    private static WorkerDto getWorkerDto(Keyword keyword) {
+        WorkerDto createdByDto = new WorkerDto();
+        Worker createdBy = keyword.getCreatedBy();
+
+        // Map non-null fields of createdBy to WorkerDto
+        if (createdBy.getWorkerId() != null) {
+            createdByDto.setWorkerId(createdBy.getWorkerId());
+        }
+        if (createdBy.getFirstName() != null) {
+            createdByDto.setFirstName(createdBy.getFirstName());
+        }
+        if (createdBy.getLastName() != null) {
+            createdByDto.setLastName(createdBy.getLastName());
+        }
+        return createdByDto;
     }
 
     @Override

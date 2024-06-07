@@ -19,15 +19,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Email implements Serializable {
 
     @Id
-    @Indexed(unique = true)
     private String emailId;
     @Indexed
     private String sender;
-    @Indexed
     private String subject;
-    @Indexed
     private String originalContent;
-    @Indexed
     private String content;
     @Indexed
     private Boolean isRead = false;
@@ -35,11 +31,8 @@ public class Email implements Serializable {
     private Boolean urgent = false;
     @Indexed
     private Boolean important = false;
-    @Indexed
     private Boolean draft = false;
-    @Indexed
     private Boolean spam = false;
-    @Indexed
     private Boolean archived = false;
     @Indexed
     private Instant date;
@@ -52,6 +45,6 @@ public class Email implements Serializable {
     private Sender contact;
     @DBRef
     private RelatedData relatedData;
-    @DBRef
-    private Action relatedAction;
+    //@DBRef
+    //private Action relatedAction;
 }

@@ -1,17 +1,25 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
+import com.emailProcessor.basedomains.dto.ActionDto;
 import com.emailProcessor.basedomains.dto.CategoryDto;
+import com.emailProcessor.basedomains.dto.EmailDto;
+import com.emailProcessor.emailProcessor.entity.Action;
 import com.emailProcessor.emailProcessor.entity.Category;
+import com.emailProcessor.emailProcessor.entity.Email;
+import com.emailProcessor.emailProcessor.repository.ActionRepository;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.service.CategoryService;
 import lombok.AllArgsConstructor;
+import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.spi.MappingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -19,17 +27,17 @@ public class CategoryServiceImp implements CategoryService {
     private final Logger log = LoggerFactory.getLogger(CategoryService.class);
     private final ModelMapper modelMapper;
     private final CategoryRepository categoryRepository;
+    private final ActionRepository actionRepository;
 
     @Override
     public CategoryDto saveCategory(CategoryDto categoryDto) {
         log.debug("Request to save Category : {}", categoryDto);
         Category category = modelMapper.map(categoryDto, Category.class);
-        Category savedCategory =categoryRepository.save(category);
+        Category savedCategory = categoryRepository.save(category);
         return modelMapper.map(savedCategory, CategoryDto.class);
     }
 
     @Override
-    //@CachePut(value = "categories", key = "'categories'")
     public CategoryDto updateCategory(Category category) {
         log.debug("Request to update Category : {}", category);
         Category updatedCategory = categoryRepository.save(category);
@@ -37,7 +45,6 @@ public class CategoryServiceImp implements CategoryService {
     }
 
     @Override
-    //@CachePut(value = "categories", key = "'categories'")
     public Optional<Category> partialUpdateCategory(Category category) {
         log.debug("Request to partially update Category : {}", category);
 
@@ -51,7 +58,8 @@ public class CategoryServiceImp implements CategoryService {
                         existingCategory.setDescription(category.getDescription());
                     }
                     if (category.getAction() != null) {
-                        existingCategory.setAction(category.getAction());
+                        Optional<Action> action = actionRepository.findById(category.getAction().getActionId());
+                        action.ifPresent(existingCategory::setAction);
                     }
 
                     return existingCategory;
@@ -68,7 +76,6 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public Optional<CategoryDto> findOneCategory(String id) {
         log.debug("Request to get Category : {}", id);
-        System.out.println("the Id of category is" + id);
         Optional<Category> category = categoryRepository.findById(id);
         return category.map(c -> modelMapper.map(c, CategoryDto.class));
     }
@@ -79,20 +86,5 @@ public class CategoryServiceImp implements CategoryService {
         categoryRepository.deleteById(id);
     }
 
-    //@CachePut(value = "categories", key = "'categories'")
-    private List<CategoryDto> updateCachedEmailList(CategoryDto categoryDto) {
-        List<Category> categories = findAllCategories();
-        List<CategoryDto> cachedCategory = categories.stream()
-                .map(c -> modelMapper.map(c, CategoryDto.class))
-                .toList();
-        // Find the email with the same ID as the saved/updated email
-        for (int i = 0; i < cachedCategory.size(); i++) {
-            if (cachedCategory.get(i).getCategoryId().equals(categoryDto.getCategoryId())) {
-                // Update the email in the cached list
-                cachedCategory.set(i, categoryDto);
-                break;
-            }
-        }
-        return cachedCategory ;
-    }
+
 }

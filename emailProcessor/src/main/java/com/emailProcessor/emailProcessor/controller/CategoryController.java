@@ -138,13 +138,11 @@ public class CategoryController {
      */
     @GetMapping("")
     //@Cacheable(value = "categories", key = "'categories'")
-    public List<CategoryDto> getAllCategories() {
+    public List<Category> getAllCategories() {
         log.debug("REST request to get all Categories");
         List<Category> categories = categoryService.findAllCategories();
         System.out.println(categories.toString());
-        return categories.stream()
-                .map(keyword -> modelMapper.map(keyword, CategoryDto.class))
-                .collect(Collectors.toList());
+        return categories;
 
 
     }

@@ -90,7 +90,7 @@ public class NLPService {
                     }
                 }
                 if (word.matches(".*\\d.*") && word.length() == 10) {
-                           relatedDataDto.setAccount_number(word);
+                    relatedDataDto.setAccount_number(word);
                 }
                 if(word.equals("period")) {
                     // Assuming period is represented as a timestamp
@@ -175,7 +175,14 @@ public class NLPService {
                 List<ActionDto> actions = selectedCategories.stream()
                         .map(CategoryDto::getAction) // Retrieve linked ActionDto for each CategoryDto
                         .collect(Collectors.toList());
-                emailProcessingResult.setAction(actions);
+
+                if (!actions.isEmpty()){
+                List<ActionParamDto> relatedActions = new ArrayList<>();
+                for (ActionDto action : actions) {
+                    Map<String, String> params = findParams(action, coreLabelList);
+                    relatedActions.add(new ActionParamDto(action, params));
+                }
+                emailProcessingResult.setRelatedActions(relatedActions);}
                 // Save the EmailProcessingResult to MongoDB
                 EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
 
@@ -190,6 +197,23 @@ public class NLPService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Map<String, String> findParams(ActionDto action, List<CoreLabel> coreLabelList) {
+        Map<String, String> params = getStringStringMap();
+        if (action != null && action.getParams() != null) {
+            for (String param : action.getParams()) {
+                for (CoreLabel coreLabel : coreLabelList) {
+                    String word = coreLabel.lemma();
+                    if (word.matches("[a-zA-Z0-9]{2,}")) {
+                    }
+                    if (word.toLowerCase().equals(param.toLowerCase())) {
+                        params.put(param, coreLabelList.get(coreLabel.index() + 1).word());
+                    }
+                }
+            }
+        }
+        return params;
     }
 
     private static Map<String, String> getStringStringMap() {

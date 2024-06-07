@@ -61,9 +61,9 @@ public class ActionController {
             Action toCreateAction = modelMapper.map(actionDto, Action.class);
             Action result = actionService.saveAction(toCreateAction);
 
-            // Update each category with the newly saved action
-            for (CategoryDto categoryDto : actionDto.getCategories()) {
-                Category category = modelMapper.map(categoryDto, Category.class);
+            // Update category with the newly saved action
+            if (actionDto.getCategory()!= null) {
+                Category category = modelMapper.map(actionDto.getCategory(), Category.class);
                 category.setAction(result);
                 categoryService.partialUpdateCategory(category);
             }

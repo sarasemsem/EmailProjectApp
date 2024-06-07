@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 
 /**
  *  Action.
@@ -31,9 +32,11 @@ public class Action implements Serializable {
     @DBRef
     private Worker updatedBy;
     private Boolean affected;
-    private Boolean state;
-    @DBRef
-    private RelatedData relatedData;
+    private Boolean state = false;
+    @NonNull
+    private String endPoint;
+    private List<String> params;
+
 
         @Override
     public boolean equals(Object o) {

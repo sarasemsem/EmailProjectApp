@@ -1,6 +1,5 @@
 package com.emailProcessor.emailProcessor.entity;
-
-
+import com.emailProcessor.basedomains.dto.ActionParamDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +10,8 @@ import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -26,6 +27,7 @@ public class EmailProcessingResult implements Serializable  {
     @DBRef
     private List<Keyword> foundKeywords;
     private Double score ;
-    @DBRef
-    private List<Action> action;
+    //@DBRef
+    //private List<Action> action;
+    private List<ActionParam> relatedActions;
 }

@@ -20,15 +20,14 @@ public class EmailDto implements Serializable {
     private String originalContent;
     private String content;
     private Instant date;
-    private Boolean isRead = false;
-    private Boolean treated = false;
-    private Boolean urgent = false;
-    private Boolean important = false;
-    private Boolean draft = false;
-    private Boolean spam = false;
-    private Boolean archived = false;
+    private Boolean isRead;
+    private Boolean treated;
+    private Boolean urgent;
+    private Boolean important;
+    private Boolean draft;
+    private Boolean spam;
+    private Boolean archived;
     private SenderDto contact;
     private EmailProcessingResultDto result;
     private RelatedDataDto relatedData;
-    private ActionDto relatedAction;
 }

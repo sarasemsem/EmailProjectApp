@@ -28,7 +28,7 @@ public class EmailController {
     @GetMapping("retrievedEmails")
     public List<EmailDto> getEmails() {
         List<EmailDto> emails = emailService.getAllEmails();
-        System.out.println(emails.toString());
+        System.out.println("liste des emails"+emails);
         return emails;
     }
 

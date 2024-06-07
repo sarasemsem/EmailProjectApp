@@ -23,9 +23,12 @@ public class ActionDto implements Serializable {
     private Instant updatedAt;
     private WorkerDto updatedBy;
     private Boolean affected;
-    private Boolean state;
+    private Boolean state = false;
+    @NonNull
+    private String endPoint;
+    private List<String> params;
     private RelatedDataDto relatedData;
-    private List<CategoryDto> categories;
+    private CategoryDto category;
         @Override
     public boolean equals(Object o) {
         if (this == o) {
