@@ -8,7 +8,6 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,6 +38,14 @@ public class NLPService {
         try {
             StanfordCoreNLP stanfordCoreNLP = Pipeline.getPipeline();
             String emailContent = email.getContent();
+            if (emailContent == null || emailContent.trim().isEmpty()) {
+                // Handle empty content case
+                // For example, mark email as treated without processing
+                email.setTreated(true);
+                // Save the email back to the database
+                emailService.partialUpdate(email);
+                return;
+            }
             CoreDocument coreDocument = new CoreDocument(emailContent);
             stanfordCoreNLP.annotate(coreDocument);
             Map<String, String> currencyMap = getStringStringMap();
@@ -49,6 +56,7 @@ public class NLPService {
             Map<String, Double> categoryScores = new HashMap<>();
             List<KeywordDto> foundKeywords = new ArrayList<>();
             RelatedDataDto relatedDataDto = new RelatedDataDto();
+
             // Iterate through coreLabelList and extract category IDs
             for (CoreLabel coreLabel : coreLabelList) {
                 String word = coreLabel.lemma();
@@ -198,6 +206,7 @@ public class NLPService {
             e.printStackTrace();
         }
     }
+
 
     private Map<String, String> findParams(ActionDto action, List<CoreLabel> coreLabelList) {
         Map<String, String> params = getStringStringMap();

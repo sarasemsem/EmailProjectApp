@@ -32,6 +32,9 @@ public class EmailMonitoringService extends MessageCountAdapter implements Appli
     private final String username;
     private final String password;
 
+    private static final int MAX_RETRIES = 5;
+    private static final long INITIAL_BACKOFF = 1000L; // 1 second
+
     public EmailMonitoringService(Session session, String username, String password) {
         this.session = session;
         this.username = username;
@@ -45,81 +48,100 @@ public class EmailMonitoringService extends MessageCountAdapter implements Appli
 
     @PostConstruct
     public void retrieveNewEmails() {
-        try {
-            System.out.println("Im in the retrieveNewEmails()");
-            // Connect to the store
-            Store store = session.getStore("imaps");
-            // Connect to your inbox
-            store.connect(username, password);
-            IMAPFolder inbox = (IMAPFolder) store.getFolder("INBOX");
+        int retryCount = 0;
+        long backoff = INITIAL_BACKOFF;
 
-            // Open the inbox in read-write mode
-            inbox.open(Folder.READ_WRITE);
+        while (retryCount < MAX_RETRIES) {
+            try {
+                System.out.println("Im in the retrieveNewEmails()");
+                // Connect to the store
+                Store store = session.getStore("imaps");
+                // Connect to your inbox
+                store.connect(username, password);
+                IMAPFolder inbox = (IMAPFolder) store.getFolder("INBOX");
 
-            // Create a new thread to keep the connection alive
-            Thread keepAliveThread = new Thread(new KeepAliveRunnable(inbox), "IdleConnectionKeepAlive");
-            keepAliveThread.start();
-            inbox.addMessageCountListener(
-                new MessageCountAdapter() {
-                    @Override
-                    public void messagesAdded(MessageCountEvent event) {
-                        // Process the newly added messages
-                        Message[] messages = event.getMessages();
-                        for (Message message : messages) {
-                            try {
-                                EmailDto emailDto = emailProcessingService.processMessage(message);
-                                // Produce the email to the Kafka topic
-                                EmailEvent emailEvent = new EmailEvent();
-                                emailEvent.setStatus("NEW");
-                                emailEvent.setMessage("new email coming-in");
-                                emailEvent.setEmail(emailDto);
-                                emailProducer.sendMessage(emailEvent);
-                                System.out.println("Email sent to Kafka: " + emailDto.getSubject());
+                // Open the inbox in read-write mode
+                inbox.open(Folder.READ_WRITE);
 
-                            } catch (MessagingException | IOException e) {
-                                e.printStackTrace();
-                                System.out.println("Failed to process email.");
+                // Create a new thread to keep the connection alive
+                Thread keepAliveThread = new Thread(new KeepAliveRunnable(inbox), "IdleConnectionKeepAlive");
+                keepAliveThread.start();
+                inbox.addMessageCountListener(
+                        new MessageCountAdapter() {
+                            @Override
+                            public void messagesAdded(MessageCountEvent event) {
+                                // Process the newly added messages
+                                Message[] messages = event.getMessages();
+                                for (Message message : messages) {
+                                    try {
+                                        EmailDto emailDto = emailProcessingService.processMessage(message);
+                                        // Produce the email to the Kafka topic
+                                        EmailEvent emailEvent = new EmailEvent();
+                                        emailEvent.setStatus("NEW");
+                                        emailEvent.setMessage("new email coming-in");
+                                        emailEvent.setEmail(emailDto);
+                                        emailProducer.sendMessage(emailEvent);
+                                        System.out.println("Email sent to Kafka: " + emailDto.getSubject());
+
+                                    } catch (MessagingException | IOException e) {
+                                        e.printStackTrace();
+                                        System.out.println("Failed to process email.");
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
                             }
                         }
-                    }
+                );
+                // Schedule a task to check for new messages periodically
+                ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+                scheduler.scheduleAtFixedRate(
+                        () -> {
+                            try {
+                                // Check for new messages using idle
+                                System.out.println("Starting IDLE");
+                                inbox.idle();
+                            } catch (MessagingException e) {
+                                System.out.println("Messaging exception during IDLE");
+                                e.printStackTrace();
+                            }
+                        },
+                        0,
+                        1,
+                        TimeUnit.MINUTES
+                );
+                // Wait for the scheduler to shut down before exiting
+                scheduler.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+                // Interrupt and shutdown the keep-alive thread
+                if (keepAliveThread.isAlive()) {
+                    keepAliveThread.interrupt();
                 }
-            );
-            // Schedule a task to check for new messages periodically
-            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-            scheduler.scheduleAtFixedRate(
-                () -> {
+                // Close the folder and store
+                inbox.close(false);
+                store.close();
+                return; // Exit the method if successful
+            } catch (MessagingException | InterruptedException e) {
+                if (e instanceof FolderClosedException || e.getCause() instanceof FolderClosedException) {
+                    System.out.println("Lost folder connection to server. Retrying...");
+                    retryCount++;
                     try {
-                        // Check for new messages using idle
-                        System.out.println("Starting IDLE");
-                        inbox.idle();
-                    } catch (MessagingException e) {
-                        System.out.println("Messaging exception during IDLE");
-                        e.printStackTrace();
+                        TimeUnit.MILLISECONDS.sleep(backoff);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        return;
                     }
-                },
-                0,
-                1,
-                TimeUnit.MINUTES
-            );
-            // Wait for the scheduler to shut down before exiting
-            scheduler.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
-            // Interrupt and shutdown the keep-alive thread
-            if (keepAliveThread.isAlive()) {
-                keepAliveThread.interrupt();
+                    backoff *= 2; // Exponential backoff
+                } else {
+                    e.printStackTrace();
+                    LOGGER.warn("Interrupted!", e);
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
             }
-            // Close the folder and store
-            inbox.close(false);
-            store.close();
-        } catch (MessagingException | InterruptedException e) {
-            e.printStackTrace(); // Log the exception
-            LOGGER.warn("Interrupted!", e);
-            /* Clean up whatever needs to be handled before interrupting  */
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
         }
+        System.out.println("Failed to reconnect to the IMAP server after " + MAX_RETRIES + " attempts.");
     }
-
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {

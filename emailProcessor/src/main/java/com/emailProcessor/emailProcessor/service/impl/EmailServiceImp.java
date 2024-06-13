@@ -5,22 +5,24 @@ import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.EmailProcessingResultRepository;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
 import com.emailProcessor.emailProcessor.repository.RelatedDataRepository;
+import com.emailProcessor.emailProcessor.service.AttachmentService;
+import com.emailProcessor.emailProcessor.service.FileService;
 import com.emailProcessor.emailProcessor.service.EmailService;
 import com.emailProcessor.emailProcessor.service.SenderService;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
+import org.bson.types.ObjectId;
 import org.modelmapper.MappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
-
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,39 +30,38 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class EmailServiceImp implements EmailService {
 
-    @Autowired
     private EmailRepository emailRepository;
-    @Autowired
     private SenderService senderService;
     private final ModelMapper modelMapper;
-    @Autowired
     private ModelMapper customModelMapper;
-
+    private FileService fileService;
+    private AttachmentService attachmentService;
     private static final Logger logger = LoggerFactory.getLogger(EmailServiceImp.class);
-    @Autowired
     private final EmailProcessingResultRepository emailProcessingResultRepository;
-    @Autowired
     private final RelatedDataRepository relatedDataRepository;
 
     @Override
     @Cacheable(value = "emails", key = "'allEmails'")
     public List<EmailDto> getAllEmails() {
+        logger.debug("Entering getAllEmails");
         try {
-            int batchSize = 50; // Adjust the batch size as per your requirement
+            int batchSize = 50;
             int page = 0;
             List<EmailDto> allEmails = new ArrayList<>();
             List<Email> emails;
             do {
                 emails = emailRepository.findAllEmails(PageRequest.of(page, batchSize));
+                logger.debug("Fetched batch of emails, size: {}", emails.size());
                 allEmails.addAll(emails.stream()
                         .map(this::convertToDto)
                         .collect(Collectors.toList()));
                 page++;
             } while (!emails.isEmpty());
+            logger.debug("Exiting getAllEmails with {} emails", allEmails.size());
             return allEmails;
         } catch (Exception e) {
-            logger.error("Error occurred while retrieving emails: {}", e.getMessage());
-            return Collections.emptyList(); // Return an empty list if an error occurs
+            logger.error("Error occurred while retrieving emails", e);
+            return Collections.emptyList();
         }
     }
 
@@ -92,7 +93,29 @@ public class EmailServiceImp implements EmailService {
         dto.setDraft(email.getDraft());
         dto.setSpam(email.getSpam());
         dto.setArchived(email.getArchived());
+        // Null check before mapping Sender to SenderDto
+        if (email.getContact() != null) {
+            dto.setContact(modelMapper.map(email.getContact(), SenderDto.class));
+        }
+        if (email.getRelatedData() != null) {
+            dto.setRelatedData(modelMapper.map(email.getRelatedData(), RelatedDataDto.class));
+        }
+        if (email.getAttachments() != null) {
+            List<AttachmentDto> attachmentList = new ArrayList<>();
+            email.getAttachments().stream().map(file -> {
+                if (file != null && file.getFileId() != null) {
+                    GridFsResource id = fileService.getFile(file.getFileId());
+                    AttachmentDto attachmentDto = new AttachmentDto();
+                    attachmentDto.setFileName(file.getFileName());
+                    attachmentDto.setFileId(id.toString());
 
+                    attachmentList.add(attachmentDto);
+                    return id.toString();
+                }
+                return null;
+            }).collect(Collectors.toList());
+            dto.setAttachments(attachmentList);
+        }
             try {
                 logger.debug("Successfully mapped Email to EmailDto: {}", dto);
                 // Null check before mapping EmailProcessingResult to EmailProcessingResultDto
@@ -123,13 +146,6 @@ public class EmailServiceImp implements EmailService {
                 throw e;
             }
 
-        // Null check before mapping Sender to SenderDto
-        if (email.getContact() != null) {
-            dto.setContact(modelMapper.map(email.getContact(), SenderDto.class));
-        }
-        if (email.getRelatedData() != null) {
-            dto.setRelatedData(modelMapper.map(email.getRelatedData(), RelatedDataDto.class));
-        }
         return dto;
     }
 
@@ -143,9 +159,35 @@ public class EmailServiceImp implements EmailService {
     @Override
     @CachePut(value = "emails", key = "'allEmails'")
     public Email createEmail(EmailDto emailDto) {
-        Optional<Sender> sender = senderService.findByEmail(emailDto.getSender());
-        sender.ifPresent(value -> emailDto.setContact(modelMapper.map(value, SenderDto.class)));
         Email email = modelMapper.map(emailDto, Email.class);
+        Optional<Sender> sender = senderService.findByEmail(emailDto.getSender());
+        sender.ifPresent(value -> email.setContact(value));
+        // Convert and set attachments
+        if (emailDto.getAttachments() != null) {
+            List<Attachment> attachmentList =new ArrayList<>();
+            List<String> attachmentIds = emailDto.getAttachments().stream().map(file -> {
+                try {
+                    ObjectId id = fileService.saveFile(file);
+                    Attachment attachment= new Attachment();
+                    attachment.setFileName(file.getFileName());
+                    attachment.setFileId(id.toString());
+
+                    //save the attachment in DB
+                    Attachment savedAttachment= attachmentService.saveAttachment(attachment);
+
+                    attachmentList.add(savedAttachment);
+                    return id.toString();
+                } catch (IOException e) {
+                    // Handle exception
+                    e.printStackTrace();
+                    logger.error("Error saving attachment", e);
+                    return null;
+                }
+            }).collect(Collectors.toList());
+
+            //email.setAttachmentIds(attachmentIds);
+            email.setAttachments(attachmentList);
+        }
         return emailRepository.save(email);
     }
 

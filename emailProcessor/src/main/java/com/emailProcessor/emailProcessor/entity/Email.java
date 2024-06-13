@@ -2,7 +2,7 @@ package com.emailProcessor.emailProcessor.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
-
+import java.util.List;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -45,6 +45,9 @@ public class Email implements Serializable {
     private Sender contact;
     @DBRef
     private RelatedData relatedData;
+    @DBRef
+    private List<Attachment> attachments;
+    //private List<String> attachmentIds;
     //@DBRef
     //private Action relatedAction;
 }

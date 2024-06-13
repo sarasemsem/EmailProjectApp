@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,6 +29,8 @@ public class EmailDto implements Serializable {
     private Boolean spam;
     private Boolean archived;
     private SenderDto contact;
+    private List<AttachmentDto> attachments;
+    private List<String> attachmentIds;
     private EmailProcessingResultDto result;
     private RelatedDataDto relatedData;
 }

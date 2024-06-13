@@ -45,7 +45,7 @@ public class EmailMonitoringServiceTest {
     private EmailMonitoringService emailMonitoringService;
 
     @Test
-    public void testScheduledEmailCheck() throws MessagingException, IOException {
+    public void testScheduledEmailCheck() throws Exception {
         // Mocking behavior
         mockStatic(Session.class, Store.class, IMAPFolder.class);
         PowerMockito.when(Session.getDefaultInstance(any(Properties.class))).thenReturn(mockSession);
