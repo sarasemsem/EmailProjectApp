@@ -2,10 +2,12 @@ package com.emailProcessor.emailProcessor.service;
 
 import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.configuration.Pipeline;
+import com.emailProcessor.emailProcessor.entity.Keyword;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -23,7 +25,10 @@ public class NLPService {
     @Autowired
     private EmailProcessingResultService emailProcessingResultService;
     @Autowired
+    private ActionParamService actionParamService;
+    @Autowired
     private KeywordService keywordService;
+    private final ModelMapper modelMapper;
 
     public void treatment() {
         try {
@@ -61,7 +66,8 @@ public class NLPService {
             for (CoreLabel coreLabel : coreLabelList) {
                 String word = coreLabel.lemma();
                 if (word.matches("[a-zA-Z0-9]{2,}")) {
-                    Optional<KeywordDto> keyword = keywordService.findKeywordByWord(word);
+                    Optional<Keyword> keywordOptional = keywordService.findKeywordByWord(word);
+                    Optional<KeywordDto> keyword = Optional.ofNullable(modelMapper.map(keywordOptional.get(), KeywordDto.class));
                     keyword.ifPresent(k -> {
                         if (!foundKeywords.contains(k)) {
                             foundKeywords.add(k);
@@ -70,12 +76,12 @@ public class NLPService {
                             for (CategoryDto category : k.getCategories()) {
                                 double weight = k.getWeight();
                                 categoryScores.put(category.getCategoryId(), categoryScores.getOrDefault(category.getCategoryId(), 0.0) + weight);
-                                if (Objects.equals(category.getTitle(), "Urgent")) {
-                                    email.setUrgent(true);
-                                }
                             }
                         }
                     });
+                }
+                if (word.equals("Urgent")) {
+                    email.setUrgent(true);
                 }
                 // Check each word and extract data based on your predefined fields
                 if (word.equals("account") && coreLabel.index() + 1 < coreLabelList.size()) {
@@ -180,17 +186,18 @@ public class NLPService {
                 emailProcessingResult.setFoundKeywords(foundKeywords);
                 emailProcessingResult.setScore(score/100);
 
-                List<ActionDto> actions = selectedCategories.stream()
-                        .map(CategoryDto::getAction) // Retrieve linked ActionDto for each CategoryDto
-                        .collect(Collectors.toList());
+                ActionDto actions = selectedCategories.stream().findFirst().orElseThrow().getAction();
 
-                if (!actions.isEmpty()){
-                List<ActionParamDto> relatedActions = new ArrayList<>();
-                for (ActionDto action : actions) {
-                    Map<String, String> params = findParams(action, coreLabelList);
-                    relatedActions.add(new ActionParamDto(action, params));
-                }
-                emailProcessingResult.setRelatedActions(relatedActions);}
+                if (actions !=null ){
+                    System.out.println("list of related actions: " +actions);
+                ActionParamDto relatedActions = new ActionParamDto();
+
+                    Map<String, String> params = findParams(actions, coreLabelList);
+                    relatedActions.setAction(actions);
+                    relatedActions.setParams(params);
+
+                ActionParamDto actionParamList = actionParamService.saveAllActionParam(relatedActions);
+                emailProcessingResult.setRelatedActions(actionParamList);}
                 // Save the EmailProcessingResult to MongoDB
                 EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
 
@@ -209,15 +216,15 @@ public class NLPService {
 
 
     private Map<String, String> findParams(ActionDto action, List<CoreLabel> coreLabelList) {
-        Map<String, String> params = getStringStringMap();
+        Map<String, String> params = null;
         if (action != null && action.getParams() != null) {
             for (String param : action.getParams()) {
                 for (CoreLabel coreLabel : coreLabelList) {
                     String word = coreLabel.lemma();
                     if (word.matches("[a-zA-Z0-9]{2,}")) {
-                    }
-                    if (word.toLowerCase().equals(param.toLowerCase())) {
-                        params.put(param, coreLabelList.get(coreLabel.index() + 1).word());
+                        if (word.toLowerCase().equals(param.toLowerCase())) {
+                            params.put(param, coreLabelList.get(coreLabel.index() + 1).word());
+                        }
                     }
                 }
             }

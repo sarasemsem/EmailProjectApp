@@ -6,12 +6,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+
 @Service
 public interface ActionService {
+
     Action saveAction(Action action);
     ActionDto updateAction(Action action);
     Optional<Action> partialUpdateAction(Action action);
     List<Action> findAllActions();
     Optional<ActionDto> findOneAction(String id);
     void deleteAction(String id);
+    ActionDto getActionDto(Action action);
+    Action ConvertActionDtoToEntity(ActionDto actionDto);
+
 }

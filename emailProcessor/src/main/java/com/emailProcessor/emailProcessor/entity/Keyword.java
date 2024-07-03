@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
@@ -30,7 +29,7 @@ public class Keyword implements Serializable{
     private String word;
     @NonNull
     @DBRef
-    private Worker createdBy;
+    private User createdBy;
     private Double weight ;
     @NonNull
     @DBRef

@@ -4,8 +4,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.emailProcessor.basedomains.dto.WorkerDto;
-import com.emailProcessor.emailProcessor.service.WorkerService;
+import com.emailProcessor.basedomains.dto.UserDto;
+import com.emailProcessor.emailProcessor.service.UserService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +23,7 @@ public class AuthProvider {
     @Value("${security.jwt.token.secret-key:secret-key}")
     private String secretKey;
 
-    private final WorkerService workerService;
+    private final UserService userService;
 
     @PostConstruct
     protected void init() {
@@ -31,17 +31,17 @@ public class AuthProvider {
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
     }
 
-    public String createToken(WorkerDto worker) {
+    public String createToken(UserDto user) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + 3600000); // 1 hour
 
         Algorithm algorithm = Algorithm.HMAC256(secretKey);
         return JWT.create()
-                .withSubject(worker.getEmail())
+                .withSubject(user.getEmail())
                 .withIssuedAt(now)
                 .withExpiresAt(validity)
-                .withClaim("firstName", worker.getFirstName())
-                .withClaim("lastName", worker.getLastName())
+                .withClaim("firstName", user.getFirstName())
+                .withClaim("lastName", user.getLastName())
                 .sign(algorithm);
     }
 
@@ -53,13 +53,13 @@ public class AuthProvider {
 
         DecodedJWT decoded = verifier.verify(token);
 
-        WorkerDto worker = WorkerDto.builder()
+        UserDto user = UserDto.builder()
                 .email(decoded.getSubject())
                 .firstName(decoded.getClaim("firstName").asString())
                 .lastName(decoded.getClaim("lastName").asString())
                 .build();
 
-        return new UsernamePasswordAuthenticationToken(worker, null, Collections.emptyList());
+        return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
     }
 
     public Authentication validateTokenStrongly(String token) {
@@ -70,7 +70,7 @@ public class AuthProvider {
 
         DecodedJWT decoded = verifier.verify(token);
 
-        WorkerDto user = workerService.findByLogin(decoded.getSubject());
+        UserDto user = userService.findByLogin(decoded.getSubject());
         return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
     }
 }

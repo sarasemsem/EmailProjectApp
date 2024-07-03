@@ -20,14 +20,25 @@ import java.util.Map;
 public class EmailProcessingResult implements Serializable  {
     @MongoId
     private String id;
-    @DBRef
+    @DBRef(lazy = true)
     private List<Category> proposedCategories;
-    @DBRef
+    @DBRef(lazy = true)
     private List<Category> selectedCategories;
-    @DBRef
+    @DBRef(lazy = true)
     private List<Keyword> foundKeywords;
-    private Double score ;
-    //@DBRef
-    //private List<Action> action;
-    private List<ActionParam> relatedActions;
+    private Double score;
+    @DBRef(lazy = true)
+    private ActionParam relatedActions;
+
+    @Override
+    public String toString() {
+        return "EmailProcessingResultDto{" +
+                "id='" + id + '\'' +
+                ", proposedCategories=" + proposedCategories +
+                ", selectedCategories=" + selectedCategories +
+                ", foundKeywords=" + foundKeywords +
+                ", score=" + score +
+                ", relatedActions=" + relatedActions +
+                '}';
+    }
 }

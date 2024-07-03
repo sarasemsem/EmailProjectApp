@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,9 @@ public class ActionController {
 
 
     private final ModelMapper modelMapper;
+    @Autowired
     private final ActionService actionService;
+    @Autowired
     private final CategoryService categoryService;
     private final ActionRepository actionRepository;
 

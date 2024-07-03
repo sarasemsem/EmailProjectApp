@@ -9,6 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class RelatedDataServiceImp implements RelatedDataService {
     private final RelatedDataRepository relatedDataRepository;
     @Override
     public RelatedDataDto saveRelatedData(RelatedDataDto relatedDataDto) {
+        Assert.notNull(relatedDataDto, "Source cannot be null");
         log.debug("Request to save relatedData : {}", relatedDataDto);
         RelatedData relatedData= modelMapper.map(relatedDataDto, RelatedData.class);
         RelatedData relatedDataDto1= relatedDataRepository.save(relatedData);

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
@@ -22,7 +23,7 @@ import java.util.List;
 @Document(collection = "action")
 public class Action implements Serializable {
 
-    @MongoId
+    @Id
     private String actionId;
     @NonNull
     private String action;
@@ -30,7 +31,7 @@ public class Action implements Serializable {
     private Instant actionDate;
     private Instant updatedAt;
     @DBRef
-    private Worker updatedBy;
+    private User updatedBy;
     private Boolean affected;
     private Boolean state = false;
     @NonNull

@@ -53,7 +53,6 @@ public class EmailMonitoringService extends MessageCountAdapter implements Appli
 
         while (retryCount < MAX_RETRIES) {
             try {
-                System.out.println("Im in the retrieveNewEmails()");
                 // Connect to the store
                 Store store = session.getStore("imaps");
                 // Connect to your inbox

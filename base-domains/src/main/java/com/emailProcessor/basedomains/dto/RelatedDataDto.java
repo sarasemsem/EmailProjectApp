@@ -19,4 +19,17 @@ public class RelatedDataDto implements Serializable {
     private double amount;
     private String currency;
     private String recipient_account;
+
+    @Override
+    public String toString() {
+        return "RelatedDataDto{" +
+                "relatedDataId='" + relatedDataId + '\'' +
+                ", accountNumber='" + account_number + '\'' +
+                ", accountType='" + account_type + '\'' +
+                ", period=" + period +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", recipientAccount='" + recipient_account + '\'' +
+                '}';
+    }
 }

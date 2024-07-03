@@ -7,25 +7,38 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A Worker.
+ * A User.
  */
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Worker1Dto implements Serializable {
+public class UserDto implements Serializable {
+    private String userId;
     private String firstName;
     private String lastName;
     private String email;
     private boolean activated = false;
-    private String imageUrl;
     private String langKey;
+    private String imageUrl;
     private String phoneNbr;
     private String password;
     private Set<SecurityRoleDto> roles = new HashSet<>();
 
-    public Worker1Dto(String message) {
+    public UserDto(String message) {
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UserDto)) {
+            return false;
+        }
+        return getUserId() != null && getUserId().equals(((UserDto) o).getUserId());
     }
 
     @Override
@@ -35,12 +48,14 @@ public class Worker1Dto implements Serializable {
 
     @Override
     public String toString() {
-        return "Worker{" +
-                "firstName='" + getFirstName() + "'" +
+        return "User{" +
+            "userId=" + getUserId() +
+                ", firstName='" + getFirstName() + "'" +
                 ", lastName='" + getLastName() + "'" +
-                ", email='" + getEmail() + "'" +
+                ", email='" + getEmail() + "'" + ", langKey='" + getLangKey() + "'" +
                 ", imageUrl='" + getImageUrl() + "'" +
                 ", phoneNbr='" + getPhoneNbr() + "'" +
+                ", password='" + getPassword() + "'" +
             "}";
     }
 }

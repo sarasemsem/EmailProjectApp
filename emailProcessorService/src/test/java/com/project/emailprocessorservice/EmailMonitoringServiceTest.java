@@ -1,68 +1,59 @@
 package com.project.emailprocessorservice;
-import com.project.emailprocessorservice.service.EmailMonitoringService;
+import com.emailProcessor.basedomains.dto.EmailDto;
 import com.project.emailprocessorservice.service.EmailProcessingService;
-import com.sun.mail.imap.IMAPFolder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.mail.*;
-import javax.mail.search.FlagTerm;
-import java.io.IOException;
-import java.util.Properties;
+import javax.mail.internet.InternetAddress;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Session.class, Store.class, IMAPFolder.class})
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class EmailMonitoringServiceTest {
 
-    @Mock
-    private Session mockSession;
 
-    @Mock
-    private Store mockStore;
-
-    @Mock
-    private IMAPFolder mockInbox;
-    @Mock
+    @InjectMocks
     private EmailProcessingService emailProcessingService;
 
     @Mock
-    private Message mockMessage;
+    private Message message;
 
-    @InjectMocks
-    private EmailMonitoringService emailMonitoringService;
+    @Mock
+    private Multipart multipart;
+
+    @Mock
+    private Part part;
+
+    @Mock
+    private BodyPart bodyPart;
+    @BeforeEach
+    public void setUp() throws Exception {
+        Address[] fromAddresses = {new InternetAddress("test@example.com")};
+        when(message.getFrom()).thenReturn(fromAddresses);
+        when(message.getSubject()).thenReturn("Test Subject");
+        when(message.getReceivedDate()).thenReturn(new Date());
+        lenient().when(message.getContent()).thenReturn(multipart);
+        lenient().when(multipart.getCount()).thenReturn(1);
+        lenient().when(multipart.getBodyPart(0)).thenReturn(bodyPart);
+        lenient().when(bodyPart.getContentType()).thenReturn("text/plain");
+        lenient().when(bodyPart.getContent()).thenReturn("Test content");
+        lenient().when(bodyPart.getDisposition()).thenReturn(null);
+        lenient().when(bodyPart.getFileName()).thenReturn(null);
+    }
 
     @Test
-    public void testScheduledEmailCheck() throws Exception {
-        // Mocking behavior
-        mockStatic(Session.class, Store.class, IMAPFolder.class);
-        PowerMockito.when(Session.getDefaultInstance(any(Properties.class))).thenReturn(mockSession);
-        PowerMockito.when(mockSession.getStore(eq("imaps"))).thenReturn(mockStore);
-        PowerMockito.doNothing().when(mockStore).connect(anyString(), anyString());
-
-        PowerMockito.when(mockStore.getFolder(eq("INBOX"))).thenReturn(mockInbox);
-        PowerMockito.doReturn(true).when(mockInbox).open(Folder.READ_WRITE);
-
-        PowerMockito.when(mockInbox.search(any(FlagTerm.class))).thenReturn(new Message[]{mockMessage});
-
-        // Execute the method to be tested
-        emailMonitoringService.scheduledEmailCheck();
-
-        // Verify that the processMessage method is called
-        verify(emailProcessingService, times(1)).processMessage(mockMessage);
-
-        // Other verifications or assertions as needed
+    @Timeout(value = 5, unit = TimeUnit.SECONDS)
+    public void testProcessMessage() throws Exception {
+        assertNotNull(emailProcessingService.processMessage(message));
     }
 }

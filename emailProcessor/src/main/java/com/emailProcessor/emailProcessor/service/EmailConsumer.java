@@ -15,6 +15,8 @@ public class EmailConsumer {
     private EmailService emailService;
     @Autowired
     private NLPService nlpService;
+    @Autowired
+    private NlpClassification nlpClassification;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailConsumer.class);
     @KafkaListener(
@@ -24,15 +26,16 @@ public class EmailConsumer {
     public void consume(EmailEvent event){
     LOGGER.info(String.format("Email event received in processor service => %s", event.toString()));
         //save the email into the database
-        consumeEmail(event.getEmail());
+        saveEmailInDatabase(event.getEmail());
         try {
-            nlpService.treatment();
+           // nlpService.treatment();
+            nlpClassification.classification();
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public void consumeEmail(EmailDto emailDto) {
+    public void saveEmailInDatabase(EmailDto emailDto) {
         try {
             // Save email to the database
             Email savingEmail= emailService.createEmail(emailDto);

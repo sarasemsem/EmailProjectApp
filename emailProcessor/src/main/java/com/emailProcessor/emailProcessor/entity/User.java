@@ -15,14 +15,14 @@ import java.util.Set;
 /**
  * A Worker.
  */
-@Document(collection = "worker")
+@Document(collection = "user")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Worker implements Serializable {
+public class User implements Serializable {
     @MongoId
-    private String workerId;
+    private String userId;
     private String firstName;
     private String lastName;
     private String email;
@@ -34,8 +34,8 @@ public class Worker implements Serializable {
     @DBRef
     private Set<SecurityRole> roles = new HashSet<>();
 
-    public Worker(String id) {
-        this.workerId = id;
+    public User(String id) {
+        this.userId = id;
     }
 
     @Override
@@ -43,10 +43,10 @@ public class Worker implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Worker)) {
+        if (!(o instanceof User)) {
             return false;
         }
-        return getWorkerId() != null && getWorkerId().equals(((Worker) o).getWorkerId());
+        return getUserId() != null && getUserId().equals(((User) o).getUserId());
     }
 
     @Override
@@ -56,8 +56,8 @@ public class Worker implements Serializable {
 
     @Override
     public String toString() {
-        return "Worker{" +
-            "workerId=" + getWorkerId() +
+        return "User{" +
+            "workerId=" + getUserId() +
             ", firstName='" + getFirstName() + "'" +
                 ", lastName='" + getLastName() + "'" +
                 ", email='" + getEmail() + "'" +

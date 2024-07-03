@@ -2,9 +2,11 @@ package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.ActionDto;
 import com.emailProcessor.emailProcessor.entity.Action;
+import com.emailProcessor.emailProcessor.entity.ActionParam;
 import com.emailProcessor.emailProcessor.repository.ActionRepository;
 import com.emailProcessor.emailProcessor.service.ActionService;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +21,11 @@ import java.util.stream.StreamSupport;
 @Service
 @AllArgsConstructor
 public class ActionServiceImp implements ActionService {
+
     private final Logger log = LoggerFactory.getLogger(ActionServiceImp.class);
     private final ModelMapper modelMapper;
     private final ActionRepository actionRepository;
+
     @Override
     public Action saveAction(Action action) {
         log.debug("Request to save Action : {}", action);
@@ -85,5 +89,57 @@ public class ActionServiceImp implements ActionService {
     public void deleteAction(String id) {
         log.debug("Request to delete Action : {}", id);
         actionRepository.deleteById(id);
+    }
+    @Override
+    public ActionDto getActionDto(Action action) {
+        ActionDto actionDto = new ActionDto();
+        if (action.getActionId() != null) {
+            actionDto.setActionId(action.getActionId());
+        }
+        actionDto.setAction(action.getAction());
+        if (action.getActionDate() != null) {
+            actionDto.setActionDate(action.getActionDate());
+        }
+        if (action.getParams() != null) {
+            actionDto.setParams(action.getParams());
+        }
+        if (action.getAffected() != null) {
+            actionDto.setAffected(action.getAffected());
+        }
+        if (action.getState() != null) {
+            actionDto.setState(action.getState());
+        }
+        if (action.getEndPoint() != null) {
+            actionDto.setEndPoint(action.getEndPoint());
+        }
+        return actionDto;
+    }
+
+    @Override
+    public Action ConvertActionDtoToEntity(ActionDto actionDto) {
+        System.out.println("actionDto is : "+actionDto);
+        Action action = new Action();
+        if (actionDto.getActionId() != null) {
+            action.setActionId(actionDto.getActionId());
+        }
+        if (actionDto.getAction() != null) {
+            action.setAction(actionDto.getAction());
+        }
+        if (actionDto.getActionDate() != null) {
+            action.setActionDate(actionDto.getActionDate());
+        }
+        if (actionDto.getParams() != null) {
+            action.setParams(actionDto.getParams());
+        }
+        if (actionDto.getAffected() != null) {
+            action.setAffected(actionDto.getAffected());
+        }
+        if (actionDto.getState() != null) {
+            action.setState(actionDto.getState());
+        }
+        if (actionDto.getEndPoint() != null) {
+            action.setEndPoint(actionDto.getEndPoint());
+        }
+        return action;
     }
 }

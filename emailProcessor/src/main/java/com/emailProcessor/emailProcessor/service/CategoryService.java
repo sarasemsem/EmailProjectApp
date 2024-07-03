@@ -1,6 +1,7 @@
 package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.CategoryDto;
 import com.emailProcessor.emailProcessor.entity.Category;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,5 +35,6 @@ public interface CategoryService {
      *
      * @param id the id of the entity.
      */
-    void deleteCategory(String id);
+    ResponseEntity<String> deleteCategory(String id);
+    CategoryDto convertCategoryToDto(Category category);
 }

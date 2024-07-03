@@ -2,14 +2,15 @@ package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.entity.Keyword;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
  * Service Interface for managing {@link com.emailProcessor.emailProcessor.entity.Keyword}.
  */
+@Service
 public interface KeywordService {
     /**
      * Save a keyword.
@@ -50,13 +51,14 @@ public interface KeywordService {
      */
     Optional<Keyword> findOne(String id);
     Optional<List<Keyword>> KeywordsByCategory(String id);
-    Optional<KeywordDto> findKeywordByWord(String word);
-
+    Optional<Keyword> findKeywordByWord(String word);
+    List<KeywordDto> convertToDto(List<Keyword> keywords);
+    KeywordDto convertKeywordToDto(Keyword keywords);
     /**
      * Delete the "id" keyword.
      *
      * @param id the id of the entity.
      */
     ResponseEntity<String> delete(String id);
-
+    ResponseEntity<String> deleteRelatedKeyword(String id);
 }

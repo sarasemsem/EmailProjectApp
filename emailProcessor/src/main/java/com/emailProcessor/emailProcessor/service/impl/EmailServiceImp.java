@@ -2,23 +2,24 @@ package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.entity.*;
+import com.emailProcessor.emailProcessor.repository.ActionParamsRepository;
 import com.emailProcessor.emailProcessor.repository.EmailProcessingResultRepository;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
 import com.emailProcessor.emailProcessor.repository.RelatedDataRepository;
-import com.emailProcessor.emailProcessor.service.AttachmentService;
-import com.emailProcessor.emailProcessor.service.FileService;
-import com.emailProcessor.emailProcessor.service.EmailService;
-import com.emailProcessor.emailProcessor.service.SenderService;
+import com.emailProcessor.emailProcessor.service.*;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.bson.types.ObjectId;
 import org.modelmapper.MappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
@@ -32,16 +33,17 @@ public class EmailServiceImp implements EmailService {
 
     private EmailRepository emailRepository;
     private SenderService senderService;
+    @Autowired
+    public EmailProcessingResultService resultService ;
     private final ModelMapper modelMapper;
-    private ModelMapper customModelMapper;
     private FileService fileService;
     private AttachmentService attachmentService;
     private static final Logger logger = LoggerFactory.getLogger(EmailServiceImp.class);
     private final EmailProcessingResultRepository emailProcessingResultRepository;
     private final RelatedDataRepository relatedDataRepository;
-
+    private final ActionParamsRepository actionParamsRepository;
+    //@Cacheable(value = "emails", key = "'allEmails'")
     @Override
-    @Cacheable(value = "emails", key = "'allEmails'")
     public List<EmailDto> getAllEmails() {
         logger.debug("Entering getAllEmails");
         try {
@@ -64,8 +66,8 @@ public class EmailServiceImp implements EmailService {
             return Collections.emptyList();
         }
     }
-
-    private EmailDto convertToDto(Email email) {
+    @Override
+    public EmailDto convertToDto(Email email) {
         if (email == null) {
             return null; // or throw an exception, depending on your requirements
         }
@@ -121,24 +123,9 @@ public class EmailServiceImp implements EmailService {
                 // Null check before mapping EmailProcessingResult to EmailProcessingResultDto
                 if (email.getResult() != null) {
                     EmailProcessingResult result = email.getResult();
-                    EmailProcessingResultDto resultDto = new EmailProcessingResultDto();
-
-                    if (result.getProposedCategories() != null) {
-                        resultDto.setProposedCategories(customModelMapper.map(result.getProposedCategories(), new TypeToken<List<CategoryDto>>() {}.getType()));
-                    }
-                    if (result.getSelectedCategories() != null) {
-                        resultDto.setSelectedCategories(customModelMapper.map(result.getSelectedCategories(), new TypeToken<List<CategoryDto>>() {}.getType()));
-                    }
-                    if (result.getFoundKeywords() != null) {
-                        resultDto.setFoundKeywords(customModelMapper.map(result.getFoundKeywords(), new TypeToken<List<KeywordDto>>() {}.getType()));
-                    }
-                    if (result.getScore() != null) {
-                        resultDto.setScore(result.getScore());
-                    }
-                    if (result.getRelatedActions() != null) {
-                        resultDto.setRelatedActions(customModelMapper.map(result.getRelatedActions(), new TypeToken<List<ActionParamDto>>() {}.getType()));
-                    }
-
+                    EmailProcessingResultDto resultDto = resultService.
+                            convertEmailProcessorToDto(result);
+                    System.out.println("this is get email result :"+resultDto.getRelatedActions());
                     dto.setResult(resultDto);
                 }
             } catch (MappingException e) {
@@ -149,15 +136,21 @@ public class EmailServiceImp implements EmailService {
         return dto;
     }
 
-    @Override
+   /* @Override
     public EmailDto getEmailById(String id) throws InterruptedException {
         Email email = emailRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Email not found with id: " + id));
         return convertToDto(email);
-    }
+    }*/
 
     @Override
-    @CachePut(value = "emails", key = "'allEmails'")
+    public Email getEmailById(String id) throws InterruptedException {
+        Email email = emailRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Email not found with id: " + id));
+        return email;
+    }
+    //@CachePut(value = "emails", key = "'allEmails'")
+    @Override
     public Email createEmail(EmailDto emailDto) {
         Email email = modelMapper.map(emailDto, Email.class);
         Optional<Sender> sender = senderService.findByEmail(emailDto.getSender());
@@ -215,7 +208,7 @@ public class EmailServiceImp implements EmailService {
                     }
                     if (emailDto.getResult() != null) {
                         EmailProcessingResultDto resultDto = emailDto.getResult();
-                        EmailProcessingResult result = modelMapper.map(resultDto, EmailProcessingResult.class);
+                        EmailProcessingResult result = resultService.convertToEntity(resultDto);
                         existingEmail.setResult(result);
                     }
                     if (emailDto.getIsRead() != null) {
@@ -327,7 +320,8 @@ public class EmailServiceImp implements EmailService {
     }
 
     @Override
-    public void deleteEmails(String[] ids) {
+    public ResponseEntity<String> deleteEmails(String[] ids) {
+        try {
         for (String id : ids) {
             Email email = emailRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Email not found with id: " + id));
@@ -344,5 +338,36 @@ public class EmailServiceImp implements EmailService {
 
             emailRepository.delete(email);
         }
+        return ResponseEntity.ok().build();
+    } catch (Exception e) {
+        logger.error("Error occurred while deleting Email: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete the resource"); // 500 Internal Server Error
+        }
+    }
+    @Override
+    public ResponseEntity<String> deleteEmail(String id) {
+        try {
+            Optional<Email> email = emailRepository.findById(id);
+            if (email.isPresent()) {
+                EmailProcessingResult result = email.get().getResult();
+                if (result.getRelatedActions() != null) {
+                    actionParamsRepository.delete(result.getRelatedActions());
+                }
+                if (result != null) {
+                    emailProcessingResultRepository.delete(result);
+                }
+                RelatedData relatedData = email.get().getRelatedData();
+                if (relatedData != null) {
+                    relatedDataRepository.delete(relatedData);
+                }
+
+                emailRepository.delete(email.get());
+                return ResponseEntity.ok().build();
+            }
+        } catch (Exception e) {
+        logger.error("Error occurred while deleting Email: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete the resource"); // 500 Internal Server Error
+        }
+        return null;
     }
 }

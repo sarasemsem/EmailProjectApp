@@ -1,22 +1,27 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
-import com.emailProcessor.basedomains.dto.ActionDto;
-import com.emailProcessor.basedomains.dto.CategoryDto;
-import com.emailProcessor.basedomains.dto.EmailDto;
+import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.entity.Action;
 import com.emailProcessor.emailProcessor.entity.Category;
 import com.emailProcessor.emailProcessor.entity.Email;
+import com.emailProcessor.emailProcessor.entity.Keyword;
 import com.emailProcessor.emailProcessor.repository.ActionRepository;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.service.CategoryService;
+import com.emailProcessor.emailProcessor.service.KeywordService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.spi.MappingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +33,14 @@ public class CategoryServiceImp implements CategoryService {
     private final ModelMapper modelMapper;
     private final CategoryRepository categoryRepository;
     private final ActionRepository actionRepository;
+    @Lazy
+    @Autowired
+    private KeywordService keywordService;
+
+    @Autowired
+    public void setKeywordService(KeywordService keywordService) {
+        this.keywordService = keywordService;
+    }
 
     @Override
     public CategoryDto saveCategory(CategoryDto categoryDto) {
@@ -77,14 +90,84 @@ public class CategoryServiceImp implements CategoryService {
     public Optional<CategoryDto> findOneCategory(String id) {
         log.debug("Request to get Category : {}", id);
         Optional<Category> category = categoryRepository.findById(id);
-        return category.map(c -> modelMapper.map(c, CategoryDto.class));
+        return category.map(c -> convertCategoryToDto(c));
     }
 
     @Override
-    public void deleteCategory(String id) {
-        log.debug("Request to delete Category : {}", id);
-        categoryRepository.deleteById(id);
+    public ResponseEntity<String> deleteCategory(String id) {
+        log.debug("Request to delete Keyword : {}", id);
+        try {
+            Optional<Category> categorOptional = categoryRepository.findById(id);
+            if (categorOptional.isPresent()) {
+                Category category = categorOptional.get();
+
+                // Ensure keyword.getCategories() is not null
+                if (category.getKeywords() != null) {
+                    // Remove keyword by ID
+                    for (String keywordId : category.getKeywords()) {
+                        if (keywordId != null) {
+                            keywordService.deleteRelatedKeyword(keywordId);
+                        } else {
+                            log.warn("keyword is null in keyword: {}", keywordId);
+                        }
+                    }
+                }
+                // Delete the category
+                categoryRepository.deleteById(id);
+                return ResponseEntity.noContent().build(); // 204 No Content
+            } else {
+                return ResponseEntity.notFound().build(); // 404 Not Found
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while deleting Category: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete the resource"); // 500 Internal Server Error
+        }
     }
 
-
+    @Override
+    public CategoryDto convertCategoryToDto(Category category) {
+        CategoryDto categoryDto = new CategoryDto();
+        if (category != null) {
+            categoryDto.setCategoryId(category.getCategoryId());
+            if (category.getTitle() != null) {
+                categoryDto.setTitle(category.getTitle());
+            }
+            if (category.getDescription() != null) {
+                categoryDto.setDescription(category.getDescription());
+            }
+            if (category.getKeywords() != null) {
+                categoryDto.setKeywords(category.getKeywords());
+            }
+            if (category.getAction() != null) {
+                ActionDto actionDto = getActionDto(category.getAction());
+                categoryDto.setAction(actionDto);
+            }
+            // Map other fields if necessary
+            return categoryDto;
+        }
+        return categoryDto;
+    }
+    public ActionDto getActionDto(Action action) {
+        ActionDto actionDto = new ActionDto();
+        if (action.getActionId() != null) {
+            actionDto.setActionId(action.getActionId());
+        }
+        actionDto.setAction(action.getAction());
+        if (action.getActionDate() != null) {
+            actionDto.setActionDate(action.getActionDate());
+        }
+        if (action.getAction() != null) {
+            actionDto.setParams(action.getParams());
+        }
+        if (action.getAction() != null) {
+            actionDto.setAffected(action.getAffected());
+        }
+        if (action.getAction() != null) {
+            actionDto.setState(action.getState());
+        }
+        if (action.getAction() != null) {
+            actionDto.setEndPoint(action.getEndPoint());
+        }
+        return actionDto;
+    }
 }
