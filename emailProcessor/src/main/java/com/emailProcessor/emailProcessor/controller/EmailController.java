@@ -2,17 +2,10 @@ package com.emailProcessor.emailProcessor.controller;
 
 import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.controller.errors.BadRequestException;
-import com.emailProcessor.emailProcessor.entity.Action;
 import com.emailProcessor.emailProcessor.entity.Email;
-import com.emailProcessor.emailProcessor.repository.CategoryRepository;
 import com.emailProcessor.emailProcessor.repository.EmailRepository;
-import com.emailProcessor.emailProcessor.service.ActionParamService;
-import com.emailProcessor.emailProcessor.service.ActionService;
-import com.emailProcessor.emailProcessor.service.EmailProcessingResultService;
-import com.emailProcessor.emailProcessor.service.EmailService;
+import com.emailProcessor.emailProcessor.service.*;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("api/v1/email")
@@ -28,23 +21,53 @@ import java.util.stream.Collectors;
 public class EmailController {
 
     private final EmailProcessingResultService resultService;
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
     private final EmailRepository emailRepository;
     private static final String ENTITY_NAME = "Email";
-    @Autowired
-    private ActionService actionService ;
-    @Autowired
-    private ActionParamService actionParamService ;
-    private final CategoryRepository categoryRepository ;
+    private final NlpClassification nlpClassification;
 
     @GetMapping("retrievedEmails")
-    public List<EmailDto> getEmails() {
+    public List<EmailDto> getAllEmails() {
         List<EmailDto> emails = emailService.getAllEmails();
         System.out.println("list des emails"+emails);
         return emails;
     }
-
+    @GetMapping("getEmails")
+    public List<EmailDto> getEmails(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        List<EmailDto> emails = emailService.getfiltredEmails(page, size);
+        System.out.println("list des emails"+emails);
+        return emails;
+    }
+    @GetMapping("getAllEmails")
+    public List<EmailDto> getAllEmails(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        List<EmailDto> emails = emailService.getAllEmails();
+        System.out.println("list des emails"+emails);
+        return emails;
+    }
+    @GetMapping("/success-rate")
+    public ResponseEntity<Double> getSuccessRate() {
+        double successRate = emailService.calculateSuccessRate();
+        return ResponseEntity.ok(successRate);
+    }
+    @PostMapping("/retry")
+    public ResponseEntity<String> retryEmailProcess(@RequestBody EmailDto emailDto) {
+        try {
+            nlpClassification.treatEmail(emailDto);
+            return ResponseEntity.ok("Email processing retried successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Failed to retry email processing.");
+        }
+    }
+    @GetMapping("/top-categories")
+    public ResponseEntity<Map<String, Long>> getTopCategories() {
+        Map<String, Long> topCategories = emailService.getTopCategories();
+        return ResponseEntity.ok(topCategories);
+    }
     @GetMapping("/treatedEmails")
     public List<EmailDto> getTreatedEmails() {
         List<EmailDto> emails = emailService.getTreatedEmails();
@@ -64,6 +87,30 @@ public class EmailController {
         List<EmailDto> emails = emailService.getUrgentEmails();
         System.out.println(emails.toString());
         return emails;
+    }
+
+    @GetMapping("/delivered/today")
+    public List<ActionParamDto> todaysDeliveredActions() {
+        List<ActionParamDto> actionParamDtos = emailService.getTodaysDeliveredActions();
+        System.out.println(actionParamDtos.toString());
+        return actionParamDtos;
+    }
+    @GetMapping("/delivered/thisMonth")
+    public List<ActionParamDto> thisMothDeliveredActions() {
+        List<ActionParamDto> actionParamDtos = emailService.getThisMonthDeliveredActions();
+        System.out.println(actionParamDtos.toString());
+        return actionParamDtos;
+    }
+    @GetMapping("/delivered/thisWeek")
+    public List<ActionParamDto> thisWeekDeliveredActions() {
+        List<ActionParamDto> actionParamDtos = emailService.getThisWeekDeliveredActions();
+        System.out.println(actionParamDtos.toString());
+        return actionParamDtos;
+    }
+
+    @GetMapping("/count")
+    public Long countEmails() {
+        return emailService.countEmails();
     }
 
     @GetMapping("/{emailId}")

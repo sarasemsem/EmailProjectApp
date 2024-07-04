@@ -82,14 +82,6 @@ public class CategoryController {
         if (category.getCategoryId() == null) {
             throw new BadRequestException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!Objects.equals(categoryId, category.getCategoryId())) {
-            throw new BadRequestException("Invalid ID", ENTITY_NAME, "idinvalid");
-        }
-
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new BadRequestException("Entity not found", ENTITY_NAME, "idnotfound");
-        }
-
         CategoryDto result = categoryService.updateCategory(category);
         return  ResponseEntity
                 .ok()
@@ -110,24 +102,19 @@ public class CategoryController {
 
     @PatchMapping(value = "/{categoryId}", consumes = { "application/json", "application/merge-patch+json" })
     public ResponseEntity<Optional<Category>> partialUpdateCategory(
-        @PathVariable(value = "categoryId", required = false) final String categoryId,
+        @PathVariable(value = "categoryId") final String categoryId,
         @NonNull
         @RequestBody Category category
     ) throws URISyntaxException {
-        log.debug("REST request to partial update Category partially : {}, {}", categoryId, category);
+        System.out.println("REST request to partialUpdateCategory : {}"+ category);
         if (category.getCategoryId() == null) {
             throw new BadRequestException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!Objects.equals(categoryId, category.getCategoryId())) {
-            throw new BadRequestException("Invalid ID", ENTITY_NAME, "idinvalid");
-        }
-
         if (!categoryRepository.existsById(categoryId)) {
             throw new BadRequestException("Entity not found", ENTITY_NAME, "idnotfound");
         }
-
         Optional<Category> result = categoryService.partialUpdateCategory(category);
-
+        System.out.println("updated category :"+ result);
         return ResponseEntity.ok(Optional.of(result.get()));
     }
 

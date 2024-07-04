@@ -6,11 +6,12 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -23,17 +24,19 @@ public class NlpClassification {
     private EmailProcessingResultService emailProcessingResultService;
     @Autowired
     private EmailClassification emailClassification;
+    private static final Logger logger = (Logger) LoggerFactory.getLogger(NlpClassification.class);
 
     public void classification() {
         try {
             List<EmailDto> emails = emailService.getAllUntreatedEmails();
             emails.forEach(this::treatEmail);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("An error occurred while processing emails", e);
         }
     }
 
     public void treatEmail(EmailDto email) {
+        Set<String> urgentWords = new HashSet<>(Arrays.asList("urgent", "urgently", "asap", "immediate", "important", "critical", "priority"));
         try {
             StanfordCoreNLP stanfordCoreNLP = Pipeline.getPipeline();
             String emailContent = email.getContent();
@@ -54,17 +57,18 @@ public class NlpClassification {
                 for (CoreLabel coreLabel : coreLabelList) {
                     String word = coreLabel.lemma();
                     if (word.matches("[a-zA-Z0-9]{2,}")) {
-                        if (word.equals("Urgent")) {
+                        if (urgentWords.contains(word.toLowerCase())) {
                             email.setUrgent(true);
+                            break;
                         }
                     }
                 }
                 EmailProcessingResultDto emailProcessingResult = emailClassification.getClassificationResult(coreLabelList);
                 RelatedDataDto relatedDataDto = emailClassification.getRelatedData(coreLabelList);
                 if (emailProcessingResult != null) {
-                    if (emailProcessingResult.getRelatedActions().getAction() != null) {
+                    if (emailProcessingResult.getRelatedActions()!=null && emailProcessingResult.getRelatedActions().getAction()!=null) {
                         System.out.println("related action is "+emailProcessingResult.getRelatedActions().getAction());
-                        // Save the EmailProcessingResult to MongoDB
+                        // Save to DB
                         EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
                         email.setResult(savedEmailProcessingResult);
                         email.setTreated(true);
@@ -79,8 +83,8 @@ public class NlpClassification {
                 emailService.partialUpdate(email);
             }
             } catch(Exception e){
-                e.printStackTrace();
-            }
+            logger.error("An error occurred while treating email", e);
+        }
         }
 
 }

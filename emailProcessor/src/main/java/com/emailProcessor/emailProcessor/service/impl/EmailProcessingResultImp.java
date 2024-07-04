@@ -1,6 +1,7 @@
 package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.*;
+import com.emailProcessor.emailProcessor.configuration.ActionParamEvent;
 import com.emailProcessor.emailProcessor.entity.*;
 import com.emailProcessor.emailProcessor.repository.ActionParamsRepository;
 import com.emailProcessor.emailProcessor.repository.ActionRepository;
@@ -13,6 +14,8 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +43,9 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
     private ActionParamsRepository actionParamsRepository;
     private final ActionRepository actionRepository;
     private final CategoryRepository categoryRepository;
+    @Autowired
+    private ActionParamsProducer actionParamsProducer;
+
 
     @Override
     public EmailProcessingResultDto saveEmailProcessingResult(EmailProcessingResultDto resultDto) throws Exception {
@@ -62,8 +68,12 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
         Map<String, String> paramsMap = params.stream()
                 .map(param -> param.split(":", 2)) // Split each string into key and value
                 .filter(array -> array.length == 2) // Ensure only valid pairs are processed
-                .collect(Collectors.toMap(array -> array[0], array -> array[1]));
-        log.debug("params Map :" , paramsMap);
+                .collect(Collectors.toMap(
+                        array -> array[0], // Key
+                        array -> array[1], // Value
+                        (existingValue, newValue) -> existingValue // Merge function to keep existing value in case of a duplicate key
+                ));
+        log.debug("params Map :" , paramsMap.size());
 
         ActionParamDto actionParamDto = new ActionParamDto();
         ActionDto actionDto = actionService.getActionDto(action);
@@ -71,8 +81,20 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
         actionParamDto.setAction(actionDto);
         actionParamDto.setParams(paramsMap);
         actionParamDto.setActionDate(Instant.now());
-
+        actionParamDto.setAffected(true);
         ActionParamDto actionParamDto1 = actionParamService.saveActionParam(actionParamDto);
+        ActionParam actionParam = actionParamService.toActionParamEntity(actionParamDto1);
+
+        if (actionParam.getAction().getState()) {
+            // Produce the email to the Kafka topic
+            ActionParamEvent actionParamEvent = new ActionParamEvent();
+            actionParamEvent.setStatus("delivery");
+            actionParamEvent.setMessage("new action coming-out");
+            actionParamEvent.setActionParam(actionParam);
+
+            // send to Kafka topic
+            actionParamsProducer.sendMessage(actionParamEvent);
+        }
 
             EmailProcessingResultDto toSaveResultDto = new EmailProcessingResultDto();
             toSaveResultDto.setSelectedCategories(resultDto.getSelectedCategories().stream().toList());
@@ -83,6 +105,7 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
         EmailProcessingResult result = convertToEntity(toSaveResultDto);
         // Save the result entity
         EmailProcessingResult savedResult = emailProcessingResultRepository.save(result);
+
         return convertEmailProcessorToDto(savedResult);
     }
 
@@ -106,7 +129,7 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
                         ActionParam actionParam = new ActionParam();
                         actionParam.setAction(action);
                         ActionParam savedActionParam = actionParamsRepository.save(actionParam);
-                        log.debug("saved param : ",savedActionParam);
+                        log.debug("saved param : ",savedActionParam.getActionParamId());
 
                         emailProcessingResult.setRelatedActions(savedActionParam);
                         partialUpdate(emailProcessingResult);
@@ -124,16 +147,18 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
                     .orElseThrow(() -> new ResourceNotFoundException
                             ("ActionParam not found with id: " + emailProcessingResult.getRelatedActions().getActionParamId()));
           //  emailProcessingResult.setRelatedActions(actionParam);
-            log.debug("parameters: " , actionParam);
-        }
-        log.debug("result actions: " , emailProcessingResult);
+            log.debug("parameters: " , actionParam.getAction());}
+        log.debug("result actions: " , emailProcessingResult.getId());
         return emailProcessingResult;
     }
 
     @Override
     public Optional<EmailProcessingResult> partialUpdate(EmailProcessingResult processingResult) {
         log.debug("Request to partially update Result : {}", processingResult);
-
+        if (processingResult.getRelatedActions() != null) {
+            String id = processingResult.getRelatedActions().getActionParamId();
+            actionService.deleteAction(id);
+        }
         return emailProcessingResultRepository
                 .findById(processingResult.getId())
                 .map(result -> {
@@ -173,8 +198,7 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
             dto.setScore(processingResult.getScore());
         }
         if (processingResult.getRelatedActions() != null) {
-            ActionParamDto actionParamList =
-            actionParamService.toActionParamDto(processingResult.getRelatedActions());
+            ActionParamDto actionParamList = actionParamService.toActionParamDto(processingResult.getRelatedActions());
             System.out.println("this is get action result :"+actionParamList.toString());
             dto.setRelatedActions(actionParamList);
         }
@@ -213,5 +237,26 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
             processingResult.setRelatedActions(relatedActions);
         }
         return processingResult;
+    }
+
+    @Override
+    public ResponseEntity<String> deleteEmailProcessingResult(String id) {
+        log.debug("Request to delete Keyword : {}", id);
+        try {
+            Optional<EmailProcessingResult> processingResult = emailProcessingResultRepository.findById(id);
+            if (processingResult.isPresent()) {
+                EmailProcessingResult result = processingResult.get();
+                Optional<ActionParam> actionParam = actionParamsRepository.findById(result.getRelatedActions().getActionParamId());
+                actionParam.ifPresent(param -> actionParamsRepository.delete(param));
+                // Delete the processingResult
+                emailProcessingResultRepository.deleteById(id);
+                return ResponseEntity.noContent().build(); // 204 No Content
+            } else {
+                return ResponseEntity.notFound().build(); // 404 Not Found
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while deleting processingResult: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete the resource"); // 500 Internal Server Error
+        }
     }
 }

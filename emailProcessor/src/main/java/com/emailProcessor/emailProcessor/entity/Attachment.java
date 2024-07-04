@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.io.Serializable;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 @ToString
 @Document(collection = "attachment")
 public class Attachment implements Serializable {
-    @Id
+    @MongoId
     @Field("_id")
     private String attachmentId;
     private String fileName;

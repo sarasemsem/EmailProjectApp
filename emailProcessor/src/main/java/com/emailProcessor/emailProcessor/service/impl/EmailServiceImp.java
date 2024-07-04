@@ -15,15 +15,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
+
 import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +39,9 @@ public class EmailServiceImp implements EmailService {
     private SenderService senderService;
     @Autowired
     public EmailProcessingResultService resultService ;
+    @Autowired
+    public ActionParamService actionParamService ;
+
     private final ModelMapper modelMapper;
     private FileService fileService;
     private AttachmentService attachmentService;
@@ -42,10 +49,11 @@ public class EmailServiceImp implements EmailService {
     private final EmailProcessingResultRepository emailProcessingResultRepository;
     private final RelatedDataRepository relatedDataRepository;
     private final ActionParamsRepository actionParamsRepository;
+
     //@Cacheable(value = "emails", key = "'allEmails'")
     @Override
     public List<EmailDto> getAllEmails() {
-        logger.debug("Entering getAllEmails");
+        logger.debug("in getAllEmails");
         try {
             int batchSize = 50;
             int page = 0;
@@ -65,6 +73,50 @@ public class EmailServiceImp implements EmailService {
             logger.error("Error occurred while retrieving emails", e);
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public List<EmailDto> getfiltredEmails(int page, int size) {
+        logger.debug("in get filtred Emails");
+        try {
+            Pageable pageable = PageRequest.of(page - 1, size); // PageRequest starts from 0
+            List<Email> emails = emailRepository.findAllEmail(pageable);
+            logger.debug("Fetched batch of emails, size: {}", emails.size());
+            return emails.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error occurred while retrieving emails", e);
+            return Collections.emptyList();
+        }
+    }
+    @Override
+    public double calculateSuccessRate() {
+        long totalEmails = emailRepository.count();
+        long failedEmails = getAllUntreatedEmails().size();
+        if (totalEmails == 0) {
+            return 0;
+        }
+        return ((double) (totalEmails - failedEmails) / totalEmails) * 100;
+    }
+    @Override
+    public Map<String, Long> getTopCategories() {
+
+        List<Email> emails = emailRepository.findAll();
+        System.out.println("top categories emails :"+ emails);
+        Map<String, Long> categoryCounts = emails.stream()
+                .filter(email -> email.getResult() != null) // Ensure the result is not null
+                .flatMap(email -> email.getResult().getSelectedCategories().stream())
+                .collect(Collectors.groupingBy(Category::getTitle, Collectors.counting()));
+
+        return categoryCounts.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new));
     }
     @Override
     public EmailDto convertToDto(Email email) {
@@ -176,7 +228,7 @@ public class EmailServiceImp implements EmailService {
                     logger.error("Error saving attachment", e);
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
             //email.setAttachmentIds(attachmentIds);
             email.setAttachments(attachmentList);
@@ -260,10 +312,67 @@ public class EmailServiceImp implements EmailService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
+    @Override
+    public Long countEmails() {
+        return emailRepository.count();
+    }
+    @Override
+    public List<ActionParamDto> getTodaysDeliveredActions() {
+        System.out.println("getTodaysDeliveredActions");
+        Instant startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant endOfDay = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        List<ActionParam> actionParams = actionParamsRepository.
+                findActionParamWithAffectedTrueAndActionDateBetween(startOfDay, endOfDay);
+        System.out.println("emails :" +actionParams);
+        return actionParams.stream()
+                .map(param -> actionParamService.toActionParamDto(param))
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<ActionParamDto> getThisMonthDeliveredActions() {
+        System.out.println("getthisMonthDeliveredActions");
+        // Get the start of the current month
+        Instant startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        // Get the start of the next month
+        Instant startOfNextMonth = LocalDate.now().plusMonths(1).withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        List<ActionParam> actionParams = actionParamsRepository.
+                findActionParamWithAffectedTrueAndActionDateBetween(startOfMonth, startOfNextMonth);
+        System.out.println("emails :" + actionParams.size());
+        return actionParams.stream()
+                .map(param -> actionParamService.toActionParamDto(param))
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<ActionParamDto> getThisWeekDeliveredActions() {
+        System.out.println("get this Week Delivered Actions");
+        // Get the start of the current week (Monday)
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = startOfWeek.plusDays(6);  // Sunday
+
+        // Convert to Instant
+        Instant startOfWeekInstant = startOfWeek.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant endOfWeekInstant = endOfWeek.atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+        List<ActionParam> actionParams = actionParamsRepository.
+                findActionParamWithAffectedTrueAndActionDateBetween(startOfWeekInstant, endOfWeekInstant);
+        System.out.println("emails :" + actionParams.size());
+        return actionParams.stream()
+                .map(param -> actionParamService.toActionParamDto(param))
+                .collect(Collectors.toList());
+    }
 
     @Override
     public List<EmailDto> getAllUntreatedEmails() {
         List<Email> emails = emailRepository.findByTreatedFalse();
+        return emails.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EmailDto> getAllUnaffectedEmails(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size); // PageRequest starts from 0
+        List<Email> emails = emailRepository.findByTreatedFalse(pageable);
         return emails.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());

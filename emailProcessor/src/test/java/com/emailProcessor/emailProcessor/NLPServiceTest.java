@@ -5,6 +5,7 @@ import com.emailProcessor.basedomains.dto.EmailDto;
 import com.emailProcessor.basedomains.dto.EmailProcessingResultDto;
 import com.emailProcessor.basedomains.dto.KeywordDto;
 import com.emailProcessor.emailProcessor.entity.Email;
+import com.emailProcessor.emailProcessor.entity.Keyword;
 import com.emailProcessor.emailProcessor.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ public class NLPServiceTest {
     }
 
     @Test
-    public void testTreatEmail() {
+    public void testTreatEmail() throws Exception {
         // Mocking email data
         Email email = new Email();
         email.setContent("Sample email content");
@@ -63,7 +64,6 @@ public class NLPServiceTest {
 
         // Mocking behavior of dependencies
         when(emailService.partialUpdate(any(EmailDto.class))).thenReturn(Optional.of(email)); // Assuming 'email' is an instance of Email
-        when(keywordService.findKeywordByWord(anyString())).thenReturn(Optional.of(keywordDto));
         when(categoryService.findOneCategory(anyString())).thenReturn(Optional.of(categoryDto));
         when(emailProcessingResultService.saveEmailProcessingResult(any(EmailProcessingResultDto.class))).thenReturn(new EmailProcessingResultDto());
 

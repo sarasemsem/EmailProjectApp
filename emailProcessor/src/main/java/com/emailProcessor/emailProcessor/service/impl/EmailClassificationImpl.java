@@ -5,7 +5,6 @@ import com.emailProcessor.emailProcessor.entity.Keyword;
 import com.emailProcessor.emailProcessor.service.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,11 +27,11 @@ public class EmailClassificationImpl implements EmailClassification {
         EmailProcessingResultDto emailProcessingResult = new EmailProcessingResultDto();
         Map<String, Double> categoryScores = new HashMap<>();
         List<KeywordDto> foundKeywords = new ArrayList<>();
-        System.out.println("get classification result with coreLabel ="+coreLabelList);
+        System.out.println("get classification result with coreLabel ");
         // Iterate through coreLabelList and extract category IDs
         for (CoreLabel coreLabel : coreLabelList) {
             String word = coreLabel.lemma();
-            System.out.println("word is :"+ word);
+            System.out.println("word is :");
 
 
             if (word.matches("[a-zA-Z0-9]{2,}")) {
@@ -79,12 +78,10 @@ public class EmailClassificationImpl implements EmailClassification {
             int count = 0;
             for (Map.Entry<String, Double> entry : sortedFilteredScores) {
                 score= score + entry.getValue();
-                if (count < 2) {
-                    String categoryId = entry.getKey();
-                    Optional<CategoryDto> category = categoryService.findOneCategory(categoryId);
-                    category.ifPresent(selectedCategories::add);
-                    count++;
-                }
+                String categoryId = entry.getKey();
+                Optional<CategoryDto> category = categoryService.findOneCategory(categoryId);
+                category.ifPresent(selectedCategories::add);
+                count++;
                 // Break after adding the top 2 categories
                 if (count >= 2) {
                     break;
@@ -96,10 +93,11 @@ public class EmailClassificationImpl implements EmailClassification {
             emailProcessingResult.setFoundKeywords(foundKeywords);
             emailProcessingResult.setScore(score/100);
 
-            ActionDto actions = selectedCategories.stream().findFirst().get().getAction();
-            if (actions != null ){
-                System.out.println("list of related actions: " +actions);
-                ActionParamDto relatedActions = new ActionParamDto();
+            if (selectedCategories.stream().findFirst().isPresent()) {
+                ActionDto actions = selectedCategories.stream().findFirst().get().getAction();
+                if (actions != null ){
+                    System.out.println("list of related actions: " +actions);
+                    ActionParamDto relatedActions = new ActionParamDto();
                     Map<String, String> params = findParams(actions, coreLabelList);
                     System.out.println("related actions.: "+actions);
                     System.out.println("related params.: "+params);
@@ -107,27 +105,29 @@ public class EmailClassificationImpl implements EmailClassification {
                     relatedActions.setParams(params);
 
                     ActionParamDto savedActionParam = actionParamService.saveActionParam(relatedActions); // Assuming saveActionParam is a method that saves one ActionParamDto
-                emailProcessingResult.setRelatedActions(savedActionParam);}
+                    emailProcessingResult.setRelatedActions(savedActionParam);
+                }
+            }
         }
         return emailProcessingResult;
     }
 
     @Override
     public RelatedDataDto getRelatedData(List<CoreLabel> coreLabelList) {
-        System.out.println("get getRelatedData with coreLabel ="+coreLabelList);
+        System.out.println("get getRelatedData with coreLabel");
         Map<String, String> currencyMap = getStringStringMap();
         RelatedDataDto relatedDataDto = new RelatedDataDto();
         for (CoreLabel coreLabel : coreLabelList) {
             String word = coreLabel.lemma();
         // Check each word and extract data based on your predefined fields
-        if (word.equals("account") && coreLabel.index() + 1 < coreLabelList.size()) {
+        if (word.equalsIgnoreCase("account") && coreLabel.index() + 1 < coreLabelList.size()) {
             String nextWord = coreLabelList.get(coreLabel.index() + 1).word().toLowerCase();
             System.out.println("the word is"+word+" and the next word is:"+nextWord );
-            if (nextWord.equals("number")&& coreLabel.index() + 2 < coreLabelList.size()) {
+            if (nextWord.equalsIgnoreCase("number")&& coreLabel.index() + 2 < coreLabelList.size()) {
                 String accountNumber = coreLabelList.get(coreLabel.index() + 2).word();
                 System.out.println("the word is"+word+" and the next word is :"+ accountNumber );
                 relatedDataDto.setAccount_number(accountNumber);
-            } else if (nextWord.equals("type")&& coreLabel.index() + 2 < coreLabelList.size()) {
+            } else if (nextWord.equalsIgnoreCase("type")&& coreLabel.index() + 2 < coreLabelList.size()) {
                 String accountType = coreLabelList.get(coreLabel.index() + 2).word();
                 relatedDataDto.setAccount_type(accountType);
             }
@@ -142,12 +142,12 @@ public class EmailClassificationImpl implements EmailClassification {
         if (word.matches(".*\\d.*") && word.length() == 10) {
             relatedDataDto.setAccount_number(word);
         }
-        if(word.equals("period")) {
+        if(word.equalsIgnoreCase("period")) {
             // Assuming period is represented as a timestamp
             // You need to convert the timestamp string to Instant, assuming it's in a specific format
             // Example: period = Instant.parse(coreLabelList.get(coreLabel.index() + 2).word());
         }
-        if (word.equals("amount")) {
+        if (word.equalsIgnoreCase("amount")) {
             // Assuming "amount" is followed by the amount value
             double amount = Double.parseDouble(coreLabelList.get(coreLabel.index() + 1).word());
             relatedDataDto.setAmount(amount);
@@ -164,12 +164,12 @@ public class EmailClassificationImpl implements EmailClassification {
                 break; // Exit the loop once a match is found
             }
         }
-        if ((word.equals("recipient") || word.equals("to")) && coreLabel.index() + 1 < coreLabelList.size()) {
+        if ((word.equalsIgnoreCase("recipient") || word.equalsIgnoreCase("to")) && coreLabel.index() + 1 < coreLabelList.size()) {
             String nextWord = coreLabelList.get(coreLabel.index() + 1).word().toLowerCase();
             String recipientAccount ;
-            if ((nextWord.equals("account") || nextWord.equals("this"))&& coreLabel.index() + 2 < coreLabelList.size()) {
+            if ((nextWord.equalsIgnoreCase("account") || nextWord.equalsIgnoreCase("this"))&& coreLabel.index() + 2 < coreLabelList.size()) {
                 String thirdWord = coreLabelList.get(coreLabel.index() + 2).word().toLowerCase();
-                if (thirdWord.equals("account") && coreLabel.index() + 3 < coreLabelList.size()) {
+                if (thirdWord.equalsIgnoreCase("account") && coreLabel.index() + 3 < coreLabelList.size()) {
                     recipientAccount = coreLabelList.get(coreLabel.index() + 3).word();
                 }else{
                     recipientAccount = coreLabelList.get(coreLabel.index() + 2).word();}
@@ -181,13 +181,13 @@ public class EmailClassificationImpl implements EmailClassification {
     }
     @Override
     public Map<String, String> findParams(ActionDto action, List<CoreLabel> coreLabelList) {
-        Map<String, String> params = null;
+        Map<String, String> params = new HashMap<>();
         if (action != null && action.getParams() != null) {
             for (String param : action.getParams()) {
                 for (CoreLabel coreLabel : coreLabelList) {
                     String word = coreLabel.lemma();
                     if (word.matches("[a-zA-Z0-9]{2,}")) {
-                        if (word.toLowerCase().equals(param.toLowerCase())) {
+                        if (word.equalsIgnoreCase(param) && coreLabel.index() + 1 < coreLabelList.size()) {
                             params.put(param, coreLabelList.get(coreLabel.index() + 1).word());
                         }
                     }
@@ -196,6 +196,7 @@ public class EmailClassificationImpl implements EmailClassification {
         }
         return params;
     }
+
     private static Map<String, String> getStringStringMap() {
         Map<String, String> currencyMap = new HashMap<>();
         currencyMap.put("united states dollar", "usd");

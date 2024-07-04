@@ -25,9 +25,10 @@ public class Category implements Serializable {
     private String categoryId;
     private String title;
     private String description;
-    private List<String> keywords ;
     @DBRef
     private Action action;
+    private List<String> keywords ;
+
 
     public Category(String id) {
         this.categoryId = id;

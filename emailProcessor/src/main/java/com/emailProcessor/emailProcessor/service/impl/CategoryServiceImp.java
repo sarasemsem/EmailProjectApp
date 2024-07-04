@@ -3,16 +3,13 @@ package com.emailProcessor.emailProcessor.service.impl;
 import com.emailProcessor.basedomains.dto.*;
 import com.emailProcessor.emailProcessor.entity.Action;
 import com.emailProcessor.emailProcessor.entity.Category;
-import com.emailProcessor.emailProcessor.entity.Email;
-import com.emailProcessor.emailProcessor.entity.Keyword;
 import com.emailProcessor.emailProcessor.repository.ActionRepository;
 import com.emailProcessor.emailProcessor.repository.CategoryRepository;
+import com.emailProcessor.emailProcessor.service.ActionService;
 import com.emailProcessor.emailProcessor.service.CategoryService;
 import com.emailProcessor.emailProcessor.service.KeywordService;
 import lombok.AllArgsConstructor;
-import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.spi.MappingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +17,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -36,6 +30,8 @@ public class CategoryServiceImp implements CategoryService {
     @Lazy
     @Autowired
     private KeywordService keywordService;
+    @Autowired
+    private ActionService actionService;
 
     @Autowired
     public void setKeywordService(KeywordService keywordService) {
@@ -60,6 +56,7 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public Optional<Category> partialUpdateCategory(Category category) {
         log.debug("Request to partially update Category : {}", category);
+        System.out.println("REST request to save Category : {}"+ category);
 
         return categoryRepository
                 .findById(category.getCategoryId())
@@ -72,7 +69,11 @@ public class CategoryServiceImp implements CategoryService {
                     }
                     if (category.getAction() != null) {
                         Optional<Action> action = actionRepository.findById(category.getAction().getActionId());
-                        action.ifPresent(existingCategory::setAction);
+                        if(action.isPresent()){
+                            existingCategory.setAction(action.get());
+                            System.out.println("update category action " + action.get());
+                        };
+
                     }
 
                     return existingCategory;
@@ -90,7 +91,7 @@ public class CategoryServiceImp implements CategoryService {
     public Optional<CategoryDto> findOneCategory(String id) {
         log.debug("Request to get Category : {}", id);
         Optional<Category> category = categoryRepository.findById(id);
-        return category.map(c -> convertCategoryToDto(c));
+        return category.map(this::convertCategoryToDto);
     }
 
     @Override
@@ -139,7 +140,8 @@ public class CategoryServiceImp implements CategoryService {
                 categoryDto.setKeywords(category.getKeywords());
             }
             if (category.getAction() != null) {
-                ActionDto actionDto = getActionDto(category.getAction());
+
+                ActionDto actionDto = actionService.getActionDto(category.getAction());
                 categoryDto.setAction(actionDto);
             }
             // Map other fields if necessary
@@ -147,27 +149,5 @@ public class CategoryServiceImp implements CategoryService {
         }
         return categoryDto;
     }
-    public ActionDto getActionDto(Action action) {
-        ActionDto actionDto = new ActionDto();
-        if (action.getActionId() != null) {
-            actionDto.setActionId(action.getActionId());
-        }
-        actionDto.setAction(action.getAction());
-        if (action.getActionDate() != null) {
-            actionDto.setActionDate(action.getActionDate());
-        }
-        if (action.getAction() != null) {
-            actionDto.setParams(action.getParams());
-        }
-        if (action.getAction() != null) {
-            actionDto.setAffected(action.getAffected());
-        }
-        if (action.getAction() != null) {
-            actionDto.setState(action.getState());
-        }
-        if (action.getAction() != null) {
-            actionDto.setEndPoint(action.getEndPoint());
-        }
-        return actionDto;
-    }
+
 }

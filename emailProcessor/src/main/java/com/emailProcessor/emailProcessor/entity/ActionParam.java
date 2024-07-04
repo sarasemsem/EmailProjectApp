@@ -26,6 +26,7 @@ public class ActionParam implements Serializable {
     private Action action;
     @Indexed
     private Map<String, String> params;
+    @Indexed
     private Boolean affected;
     private Instant actionDate;
 

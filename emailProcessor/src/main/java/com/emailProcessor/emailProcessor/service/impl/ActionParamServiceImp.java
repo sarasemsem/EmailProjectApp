@@ -30,6 +30,7 @@ public class ActionParamServiceImp implements ActionParamService {
     @Override
     public ActionParamDto toActionParamDto(ActionParam actionParam) {
         ActionParamDto actionParamDto = new ActionParamDto();
+
         if (actionParam.getActionParamId() != null) {
             actionParamDto.setActionParamId(actionParam.getActionParamId());
         }
@@ -47,6 +48,7 @@ public class ActionParamServiceImp implements ActionParamService {
             log.info("action param dto are : " + actionParam.getAffected());
             actionParamDto.setAffected(actionParam.getAffected());
         }
+
         return actionParamDto;
     }
 

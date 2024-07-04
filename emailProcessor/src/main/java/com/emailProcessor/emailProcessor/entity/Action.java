@@ -23,7 +23,7 @@ import java.util.List;
 @Document(collection = "action")
 public class Action implements Serializable {
 
-    @Id
+    @MongoId
     private String actionId;
     @NonNull
     private String action;
@@ -60,7 +60,7 @@ public class Action implements Serializable {
     public String toString() {
         return "Action{" +
             "actionId=" + getActionId() +
-            ", type='" + getAction() + "'" +
+            ", action='" + getAction() + "'" +
             ", descriptionAct='" + getDescriptionAct() + "'" +
             ", actionDate='" + getActionDate() + "'" +
             ", updatedAt='" + getUpdatedAt() + "'" +

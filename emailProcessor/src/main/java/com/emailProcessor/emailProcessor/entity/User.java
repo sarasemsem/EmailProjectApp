@@ -34,9 +34,6 @@ public class User implements Serializable {
     @DBRef
     private Set<SecurityRole> roles = new HashSet<>();
 
-    public User(String id) {
-        this.userId = id;
-    }
 
     @Override
     public boolean equals(Object o) {
