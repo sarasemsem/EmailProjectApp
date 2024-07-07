@@ -248,14 +248,8 @@ public class KeywordServiceImpl implements KeywordService {
     }
 
     @Override
-    public Optional<Keyword> findKeywordByWord(String word) {
-
-        Optional<Keyword> keyword = keywordRepository.findKeywordByWord(word);
-        if (keyword.isPresent()) {
-            return keyword;
-        } else {
-            return Optional.empty();
-        }
+    public List<Keyword> findKeywordByWord(String word) {
+        return keywordRepository.findKeywordByWord(word);
     }
 
     @Override

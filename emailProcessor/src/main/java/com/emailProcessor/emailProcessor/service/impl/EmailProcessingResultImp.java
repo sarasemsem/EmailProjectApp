@@ -48,6 +48,18 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
 
 
     @Override
+    public EmailProcessingResultDto saveNewEmailProcessingResult(EmailProcessingResultDto resultDto) throws Exception {
+        log.debug("Request to save new result : {}", resultDto);
+        EmailProcessingResult result = convertToEntity(resultDto);
+        // Save the result entity
+        EmailProcessingResult savedResult = emailProcessingResultRepository.save(result);
+
+        return convertEmailProcessorToDto(savedResult);
+    }
+
+
+
+    @Override
     public EmailProcessingResultDto saveEmailProcessingResult(EmailProcessingResultDto resultDto) throws Exception {
         log.debug("Request to save the result : {}", resultDto);
 
@@ -85,7 +97,7 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
         ActionParamDto actionParamDto1 = actionParamService.saveActionParam(actionParamDto);
         ActionParam actionParam = actionParamService.toActionParamEntity(actionParamDto1);
 
-        if (actionParam.getAction().getState()) {
+        if (actionParam.getAction().getState() && resultDto.getScore()>70) {
             // Produce the email to the Kafka topic
             ActionParamEvent actionParamEvent = new ActionParamEvent();
             actionParamEvent.setStatus("delivery");
@@ -100,6 +112,9 @@ public class EmailProcessingResultImp implements EmailProcessingResultService {
             toSaveResultDto.setSelectedCategories(resultDto.getSelectedCategories().stream().toList());
             toSaveResultDto.setScore(resultDto.getScore());
             toSaveResultDto.setRelatedActions(actionParamDto1);
+            toSaveResultDto.setFoundKeywords(resultDto.getFoundKeywords());
+            toSaveResultDto.setParams(resultDto.getParams());
+            toSaveResultDto.setProposedCategories(resultDto.getProposedCategories());
 
         log.debug("Request to save the result :" , toSaveResultDto);
         EmailProcessingResult result = convertToEntity(toSaveResultDto);

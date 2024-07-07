@@ -51,7 +51,7 @@ public interface KeywordService {
      */
     Optional<Keyword> findOne(String id);
     Optional<List<Keyword>> KeywordsByCategory(String id);
-    Optional<Keyword> findKeywordByWord(String word);
+    List<Keyword> findKeywordByWord(String word);
     List<KeywordDto> convertToDto(List<Keyword> keywords);
     KeywordDto convertKeywordToDto(Keyword keywords);
     /**

@@ -176,14 +176,10 @@ public class ActionController {
     @GetMapping("/{id}")
     public ResponseEntity<ActionDto> getAction(@PathVariable("id") String id) {
         log.debug("REST request to get action : {}", id);
-        Optional<ActionDto> action = actionService.findOneAction(id);
-        if (action.isPresent()) {
-            log.debug("action found: {}", action.get());
-            return ResponseEntity.ok(action.get());
-        } else {
-            log.debug("action not found for id: {}", action);
-            return ResponseEntity.notFound().build();
-        }
+        ActionDto action = actionService.findOneAction(id);
+            log.debug("action found: {}", action);
+            return ResponseEntity.ok(action);
+
     }
 
     /**

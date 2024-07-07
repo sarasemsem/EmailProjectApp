@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface KeywordRepository extends MongoRepository<Keyword, String> {
-    Optional<Keyword> findKeywordByWord(String word);
+    List<Keyword> findKeywordByWord(String word);
     List<Keyword> findKeywordsByCategories(String id);
 }

@@ -66,19 +66,22 @@ public class NLPService {
             for (CoreLabel coreLabel : coreLabelList) {
                 String word = coreLabel.lemma();
                 if (word.matches("[a-zA-Z0-9]{2,}")) {
-                    Optional<Keyword> keywordOptional = keywordService.findKeywordByWord(word);
-                    Optional<KeywordDto> keyword = Optional.ofNullable(modelMapper.map(keywordOptional.get(), KeywordDto.class));
-                    keyword.ifPresent(k -> {
-                        if (!foundKeywords.contains(k)) {
-                            foundKeywords.add(k);
+                    List<Keyword> keywords = keywordService.findKeywordByWord(word);
+                    for (Keyword keyword1 : keywords) {
+                        System.out.println("i found this keyword is :" + keyword1.getKeywordId() + keyword1.getWord());
+                        KeywordDto keyword = keywordService.convertKeywordToDto(keyword1);
+                        System.out.println("aaaaaa keyword categories is :" + keyword.getCategories());
+                        if (!foundKeywords.contains(keyword)) {
+                            foundKeywords.add(keyword);
                         }
-                        if (k.getCategories() != null) {
-                            for (CategoryDto category : k.getCategories()) {
-                                double weight = k.getWeight();
+                        if (keyword.getCategories() != null) {
+                            for (CategoryDto category : keyword.getCategories()) {
+                                double weight = keyword.getWeight();
                                 categoryScores.put(category.getCategoryId(), categoryScores.getOrDefault(category.getCategoryId(), 0.0) + weight);
                             }
                         }
-                    });
+                    }
+
                 }
                 if (word.equals("Urgent")) {
                     email.setUrgent(true);

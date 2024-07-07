@@ -9,6 +9,8 @@ import java.util.Optional;
 
 @Service
 public interface EmailProcessingResultService {
+    EmailProcessingResultDto saveNewEmailProcessingResult(EmailProcessingResultDto resultDto) throws Exception;
+
     EmailProcessingResultDto saveEmailProcessingResult(EmailProcessingResultDto result) throws Exception;
     EmailProcessingResult findById(String id);
     Optional<EmailProcessingResult> partialUpdate(EmailProcessingResult processingResult);

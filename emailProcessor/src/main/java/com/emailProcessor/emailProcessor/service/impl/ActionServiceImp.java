@@ -2,21 +2,16 @@ package com.emailProcessor.emailProcessor.service.impl;
 
 import com.emailProcessor.basedomains.dto.ActionDto;
 import com.emailProcessor.emailProcessor.entity.Action;
-import com.emailProcessor.emailProcessor.entity.ActionParam;
 import com.emailProcessor.emailProcessor.repository.ActionRepository;
 import com.emailProcessor.emailProcessor.service.ActionService;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 @Service
 @AllArgsConstructor
@@ -79,10 +74,14 @@ public class ActionServiceImp implements ActionService {
     }
 
     @Override
-    public Optional<ActionDto> findOneAction(String id) {
+    public ActionDto findOneAction(String id) {
         log.debug("Request to get Action : {}", id);
+        ActionDto actionDto = new ActionDto();
         Optional<Action> action= actionRepository.findById(id);
-        return Optional.of(modelMapper.map(action, ActionDto.class));
+        if (action.isPresent()) {
+            actionDto = getActionDto(action.get()) ;
+        }
+        return actionDto;
 }
 
     @Override

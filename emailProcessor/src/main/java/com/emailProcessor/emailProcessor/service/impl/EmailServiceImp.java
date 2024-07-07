@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -364,7 +365,8 @@ public class EmailServiceImp implements EmailService {
 
     @Override
     public List<EmailDto> getAllUntreatedEmails() {
-        List<Email> emails = emailRepository.findByTreatedFalse();
+        Sort sort = Sort.by(Sort.Direction.ASC, "date");
+        List<Email> emails = emailRepository.findByTreatedFalse(sort);
         return emails.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -432,20 +434,23 @@ public class EmailServiceImp implements EmailService {
     public ResponseEntity<String> deleteEmails(String[] ids) {
         try {
         for (String id : ids) {
-            Email email = emailRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Email not found with id: " + id));
+            Optional<Email> email = emailRepository.findById(id);
+            if (email.isPresent()) {
+                EmailProcessingResult result = email.get().getResult();
+                if (result.getRelatedActions() != null) {
+                    actionParamsRepository.delete(result.getRelatedActions());
+                }
+                if (result != null) {
+                    emailProcessingResultRepository.delete(result);
+                }
+                RelatedData relatedData = email.get().getRelatedData();
+                if (relatedData != null) {
+                    relatedDataRepository.delete(relatedData);
+                }
 
-            EmailProcessingResult result = email.getResult();
-            if (result != null) {
-                emailProcessingResultRepository.delete(result);
+                emailRepository.delete(email.get());
+                return ResponseEntity.ok().build();
             }
-
-            RelatedData relatedData = email.getRelatedData();
-            if (relatedData != null) {
-                relatedDataRepository.delete(relatedData);
-            }
-
-            emailRepository.delete(email);
         }
         return ResponseEntity.ok().build();
     } catch (Exception e) {

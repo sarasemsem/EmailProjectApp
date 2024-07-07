@@ -8,7 +8,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,6 +23,8 @@ import java.util.stream.Collectors;
 public class EmailClassificationImpl implements EmailClassification {
     @Autowired
     private KeywordService keywordService;
+    @Autowired
+    private ActionService actionService;
     @Autowired
     private CategoryService categoryService;
     @Autowired
@@ -35,12 +44,11 @@ public class EmailClassificationImpl implements EmailClassification {
 
 
             if (word.matches("[a-zA-Z0-9]{2,}")) {
-                Optional<Keyword> keywordOptional = keywordService.findKeywordByWord(word);
-                if (keywordOptional.isPresent()) {
-                    System.out.println("i found this keyword is :"+keywordOptional.get().getKeywordId()+keywordOptional.get().getWord());
-                    Keyword keyword1 = keywordOptional.get();
+                List<Keyword> keywords = keywordService.findKeywordByWord(word);
+                for (Keyword keyword1 : keywords) {
+                    System.out.println("i found this keyword is :" + keyword1.getKeywordId() + keyword1.getWord());
                     KeywordDto keyword = keywordService.convertKeywordToDto(keyword1);
-                    System.out.println("aaaaaa keyword categories is :"+ keyword.getCategories());
+                    System.out.println("aaaaaa keyword categories is :" + keyword.getCategories());
                     if (!foundKeywords.contains(keyword)) {
                         foundKeywords.add(keyword);
                     }
@@ -51,6 +59,7 @@ public class EmailClassificationImpl implements EmailClassification {
                         }
                     }
                 }
+
             }
         }
         if (!categoryScores.isEmpty()) {
@@ -94,28 +103,46 @@ public class EmailClassificationImpl implements EmailClassification {
             emailProcessingResult.setScore(score/100);
 
             if (selectedCategories.stream().findFirst().isPresent()) {
-                ActionDto actions = selectedCategories.stream().findFirst().get().getAction();
-                if (actions != null ){
-                    System.out.println("list of related actions: " +actions);
-                    ActionParamDto relatedActions = new ActionParamDto();
-                    Map<String, String> params = findParams(actions, coreLabelList);
-                    System.out.println("related actions.: "+actions);
-                    System.out.println("related params.: "+params);
-                    relatedActions.setAction(actions);
-                    relatedActions.setParams(params);
+                ActionDto getAction = selectedCategories.stream().findFirst().get().getAction();
+                if (getAction != null ){
+                    System.out.println("list of related actions: " +getAction);
+                    ActionDto actionDto = actionService.findOneAction(getAction.getActionId());
+                        ActionParamDto relatedActions = new ActionParamDto();
+                        Map<String, String> params = findParams(actionDto, coreLabelList);
 
-                    ActionParamDto savedActionParam = actionParamService.saveActionParam(relatedActions); // Assuming saveActionParam is a method that saves one ActionParamDto
-                    emailProcessingResult.setRelatedActions(savedActionParam);
+                        System.out.println("related actions.: "+actionDto);
+                        System.out.println("related params.: "+params);
+
+                        // Convert params to paramsMap if needed (though it's redundant in this case)
+                        Map<String, String> paramsMap = params.entrySet().stream()
+                                .collect(Collectors.toMap(
+                                        Map.Entry::getKey,
+                                        Map.Entry::getValue,
+                                        (existingValue, newValue) -> existingValue // Merge function to keep the existing value in case of a duplicate key
+                                ));
+
+
+                        relatedActions.setAction(actionDto);
+                        relatedActions.setParams(paramsMap);
+                        relatedActions.setActionDate(Instant.now());
+                        relatedActions.setAffected(true);
+                        ActionParamDto savedActionParam = actionParamService.saveActionParam(relatedActions); // Assuming saveActionParam is a method that saves one ActionParamDto
+                        emailProcessingResult.setRelatedActions(savedActionParam);
+
+
                 }
             }
         }
         return emailProcessingResult;
     }
 
+
+
     @Override
     public RelatedDataDto getRelatedData(List<CoreLabel> coreLabelList) {
         System.out.println("get getRelatedData with coreLabel");
         Map<String, String> currencyMap = getStringStringMap();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.systemDefault());
         RelatedDataDto relatedDataDto = new RelatedDataDto();
         for (CoreLabel coreLabel : coreLabelList) {
             String word = coreLabel.lemma();
@@ -142,11 +169,19 @@ public class EmailClassificationImpl implements EmailClassification {
         if (word.matches(".*\\d.*") && word.length() == 10) {
             relatedDataDto.setAccount_number(word);
         }
-        if(word.equalsIgnoreCase("period")) {
-            // Assuming period is represented as a timestamp
-            // You need to convert the timestamp string to Instant, assuming it's in a specific format
-            // Example: period = Instant.parse(coreLabelList.get(coreLabel.index() + 2).word());
-        }
+            if (word.equalsIgnoreCase("period")) {
+                // Assuming period is followed by a date in the format dd/MM/yyyy
+                if (coreLabel.index() + 1 < coreLabelList.size()) {
+                    String periodDateStr = coreLabelList.get(coreLabel.index() + 1).word();
+                    try {
+                        Instant periodDate = LocalDate.parse(periodDateStr, formatter).atStartOfDay(ZoneId.systemDefault()).toInstant();
+                        relatedDataDto.setPeriod(periodDate);
+                        System.out.println("Period date set to: " + periodDate);
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Invalid date format for period: " + periodDateStr);
+                    }
+                }
+            }
         if (word.equalsIgnoreCase("amount")) {
             // Assuming "amount" is followed by the amount value
             double amount = Double.parseDouble(coreLabelList.get(coreLabel.index() + 1).word());
@@ -182,20 +217,53 @@ public class EmailClassificationImpl implements EmailClassification {
     @Override
     public Map<String, String> findParams(ActionDto action, List<CoreLabel> coreLabelList) {
         Map<String, String> params = new HashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.systemDefault());
+        System.out.println("action in findParams is: " + action);
+
         if (action != null && action.getParams() != null) {
+            System.out.println("and its params are: " + action.getParams());
+
+            // Create a map of CoreLabels for quick lookup by index
+            Map<Integer, CoreLabel> labelMap = coreLabelList.stream()
+                    .collect(Collectors.toMap(CoreLabel::index, label -> label, (existing, replacement) -> existing));
+
+            // Join the content into a single string for pattern matching
+            String content = coreLabelList.stream().map(CoreLabel::word).collect(Collectors.joining(" "));
+
+            // Define date pattern
+            Pattern datePattern = Pattern.compile("\\b(\\d{2}/\\d{2}/\\d{4})\\b");
+
             for (String param : action.getParams()) {
-                for (CoreLabel coreLabel : coreLabelList) {
-                    String word = coreLabel.lemma();
-                    if (word.matches("[a-zA-Z0-9]{2,}")) {
-                        if (word.equalsIgnoreCase(param) && coreLabel.index() + 1 < coreLabelList.size()) {
-                            params.put(param, coreLabelList.get(coreLabel.index() + 1).word());
-                        }
+                String[] paramWords = param.split(" ");
+                String paramPattern = String.join("\\s+", paramWords) + "\\s+(\\S+)";
+                Pattern pattern = Pattern.compile(paramPattern, Pattern.CASE_INSENSITIVE);
+                System.out.println("pattern: " + pattern);
+                System.out.println("content: " + content);
+
+                Matcher matcher = pattern.matcher(content);
+                System.out.println("matcher: " + matcher);
+
+                if (matcher.find()) {
+                    String value = matcher.group(1);
+                    System.out.println("value: " + value);
+                    params.put(param, value);
+                } else if (param.equalsIgnoreCase("start date") || param.equalsIgnoreCase("end date")) {
+                    Matcher dateMatcher = datePattern.matcher(content);
+                    if (param.equalsIgnoreCase("start date") && dateMatcher.find()) {
+                        String startDate = dateMatcher.group(1);
+                        System.out.println("start date: " + startDate);
+                        params.put(param, startDate);
+                    } else if (param.equalsIgnoreCase("end date") && dateMatcher.find() && dateMatcher.find()) {
+                        String endDate = dateMatcher.group(1);
+                        System.out.println("end date: " + endDate);
+                        params.put(param, endDate);
                     }
                 }
             }
         }
         return params;
     }
+
 
     private static Map<String, String> getStringStringMap() {
         Map<String, String> currencyMap = new HashMap<>();

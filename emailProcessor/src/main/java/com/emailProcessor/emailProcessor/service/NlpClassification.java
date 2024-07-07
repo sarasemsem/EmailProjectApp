@@ -69,7 +69,7 @@ public class NlpClassification {
                     if (emailProcessingResult.getRelatedActions()!=null && emailProcessingResult.getRelatedActions().getAction()!=null) {
                         System.out.println("related action is "+emailProcessingResult.getRelatedActions().getAction());
                         // Save to DB
-                        EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveEmailProcessingResult(emailProcessingResult);
+                        EmailProcessingResultDto savedEmailProcessingResult = emailProcessingResultService.saveNewEmailProcessingResult(emailProcessingResult);
                         email.setResult(savedEmailProcessingResult);
                         email.setTreated(true);
                     }

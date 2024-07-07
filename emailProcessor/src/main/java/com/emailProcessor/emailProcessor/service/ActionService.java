@@ -1,7 +1,6 @@
 package com.emailProcessor.emailProcessor.service;
 import com.emailProcessor.basedomains.dto.ActionDto;
 import com.emailProcessor.emailProcessor.entity.Action;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,7 +13,7 @@ public interface ActionService {
     ActionDto updateAction(Action action);
     Optional<Action> partialUpdateAction(Action action);
     List<Action> findAllActions();
-    Optional<ActionDto> findOneAction(String id);
+    ActionDto findOneAction(String id);
     void deleteAction(String id);
     ActionDto getActionDto(Action action);
     Action ConvertActionDtoToEntity(ActionDto actionDto);
